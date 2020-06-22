@@ -21,8 +21,11 @@ import matplotlib.pyplot as plt
         
 
 # function to generate and return the matrix
-def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16, method="simple"):
+def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16, verbose=False, method="simple"):
         
+    opts = {}
+    opts["verbose"] = verbose
+
     # out degree of the vertices
     outdeg = np.zeros(N)
     outdeg[0:m] = group_size
@@ -125,7 +128,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
 
         data = {}
         data['A'] = A
-        sio.savemat('./run_data', data)
+        sio.savemat('./run_data.mat', data)
 
     return A
 
@@ -134,9 +137,6 @@ if __name__ == '__main__':
 
     print("Loaded igraph version {}".format(igraph.__version__))
 
-    opts = {}
-    opts["verbose"] = True#False
-
     # maximum size of each group (#1s on each row)
     group_size = 30
 
@@ -144,11 +144,12 @@ if __name__ == '__main__':
     max_tests_per_individual = 16
 
     # number of tests
-    m = 50
+    m = 100
 
     # total population size
-    N = 100
+    N = 200
 
-    A = gen_measurement_matrix(m, N, group_size, max_tests_per_individual, method="simple")
+    A = gen_measurement_matrix(m, N, group_size, max_tests_per_individual, verbose = True, method="simple")
 
+    print("Generated adjacency matrix of size:")
     print(A.shape)

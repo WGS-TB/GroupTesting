@@ -11,6 +11,7 @@ import copy
 from sklearn.base import BaseEstimator, ClassifierMixin
 import cplex
 from sklearn.metrics import f1_score
+import generate_groups
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
 

@@ -20,28 +20,12 @@ import matplotlib.pyplot as plt
 #        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),method="simple")
         
 
-# reserved for later
-#def gen_measurement_matrix(m, N, method="simple"):
-#    return A
-
-if __name__ == '__main__': 
-
-    print("Loaded igraph version {}".format(igraph.__version__))
-
-    opts = {}
-    opts["verbose"] = True#False
-
-    # maximum size of each group (#1s on each row)
-    group_size = 2
-
-    # maximum number of tests we can run per individual (#1s on each column)
-    max_tests_per_individual = 1
-
-    # number of tests
-    m = 5
-
-    # total population size
-    N = 20
+# function to generate and return the matrix
+def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16, method="simple"):
+        
+    # out degree of the vertices
+    outdeg = np.zeros(N)
+    outdeg[0:m] = group_size
 
     try:
         assert m <= math.ceil(N/2)
@@ -52,11 +36,6 @@ if __name__ == '__main__':
             + " (or else some individuals will be tested more than the max times)")
         print(errstr)
         #sys.exit()
-        
-
-    # out degree of the vertices
-    outdeg = np.zeros(N)
-    outdeg[0:m] = group_size
 
     # in degree of the vertices
     indeg = np.zeros(N)
@@ -147,3 +126,29 @@ if __name__ == '__main__':
         data = {}
         data['A'] = A
         sio.savemat('./run_data', data)
+
+    return A
+
+# main method for testing
+if __name__ == '__main__': 
+
+    print("Loaded igraph version {}".format(igraph.__version__))
+
+    opts = {}
+    opts["verbose"] = True#False
+
+    # maximum size of each group (#1s on each row)
+    group_size = 30
+
+    # maximum number of tests we can run per individual (#1s on each column)
+    max_tests_per_individual = 16
+
+    # number of tests
+    m = 50
+
+    # total population size
+    N = 100
+
+    A = gen_measurement_matrix(m, N, group_size, max_tests_per_individual, method="simple")
+
+    print(A.shape)

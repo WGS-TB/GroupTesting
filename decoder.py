@@ -11,10 +11,15 @@ import copy
 from sklearn.base import BaseEstimator, ClassifierMixin
 import cplex
 from sklearn.metrics import f1_score
-import generate_groups
 
+"""
+Decoder for the group testing problem
+"""
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
 
+    """
+    Initialization of the decoder
+    """
     def __init__(self, rc=1, rc_e=1, rc_p=0.1, rc_z=0.1, cpx_timelimit=None,\
                  rule_max_length=None, FN_up=None, FP_up=None):
 
@@ -28,6 +33,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.FP_up = FP_up
         self.FP_up_percent = FP_up
 
+    """
+    Method for training the classifier with CPLEX
+    """
     def fit(self, X, y):
 
         m, n = X.shape
@@ -35,7 +43,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.m_ = m
         self.n_ = n
         X = X.values.tolist()
-        # Positive and zero split                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+
+        # Positive and zero split
         P = [i for i in range(len(y)) if y[i] == 1]
         Z = [i for i in range(len(y)) if i not in P]
         # FN_up and FP_up are in percentage. We should convert them to get the
@@ -44,6 +53,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             self.FN_up = self.FN_up * len(P)
         if self.FP_up is not None:
             self.FP_up  = self.FP_up * len(Z)
+
         # ----------- Cplex ILP problem setup ----------------------
         # Objective function general form: lambda_rc*(1^T w)+ lambda_rc_e*(lambda_rc_p*(1^T ep) + lambda_rc_z*(1^T ez)) 
         p_obj = [self.rc] * n + [self.rc_e * self.rc_p] * len(P) + [self.rc_e * self.rc_z] * len(Z)
@@ -66,9 +76,12 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         # Time limit for solving the problem
         if self.cpx_timelimit is not None:
             prob.parameters.timelimit.set(self.cpx_timelimit)
-        # --------------------------------------                                                                            
+
+
+        # --------------------------------------
         prob.objective.set_sense(prob.objective.sense.minimize)
         prob.variables.add(obj=p_obj, lb=p_lb, ub=p_ub, types=p_ctype, names=p_colnames)
+
         # ---------------- Constraints ----------------------------
         for i in P:
             row_P_name = ["w" + str(j) for j in range(n) if X[i][j] != 0] + ["ep" + str(i)]
@@ -79,7 +92,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             row_Z_name = ["w" + str(j) for j in range(n) if X[i][j] != 0] + ["ez" + str(i)]
             row_Z_value = [-X[i][j] for j in range(n) if X[i][j] != 0] + [row_sum[i]]
             rows.append(copy.copy([row_Z_name, row_Z_value]))
-        # ----------------- Additional constraints -----------------                                                                                                                                                                                                                                                                                                                                                                                                                   
+
+        # ----------------- Additional constraints -----------------
         if self.rule_max_length is not None:
             row_w_name = ["w" + str(j) for j in range(n)]
             row_w_value = [1 for j in range(n)]
@@ -92,7 +106,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             row_ez_name = ["ez" + str(j) for j in Z]
             row_ez_value = [1 for j in Z]
             rows.append(copy.copy([row_ez_name, row_ez_value]))
-        # ----------------------------------------------------------                                                                                                                                                                                                                                                                                                                                                                                                                   
+
+        # ----------------------------------------------------------
         prob.linear_constraints.add(lin_expr=rows, senses=p_sense, rhs=p_rhs, names=p_rownames)
         #prob.set_log_stream(None)
         #prob.set_error_stream(None)
@@ -109,6 +124,10 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         print('------------------------------------------------')
         print(len(self.w_solution_))
         return self
+
+    """
+    Method for predicting with classifier
+    """
     def predict(self, X, y=None):
 
         try:
@@ -119,6 +138,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             raise RuntimeError("You must train classifer before predicting data!")
         return y_pred
 
+    """
+    Method for assigning a score usin the F1 metric
+    """
     def score(self, X, y=None, metric='F1'):
         if metric == 'F1':
             score_value = f1_score(y, self.predict(X))

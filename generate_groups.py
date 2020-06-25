@@ -1,6 +1,7 @@
 # import standard libraries
 import time, os, argparse, io, shutil, sys, math, socket
 import numpy as np
+import random
 #np.set_printoptions(threshold=np.inf)
 np.set_printoptions(edgeitems=60, linewidth=100000, 
     formatter=dict(float=lambda x: "%.3g" % x))
@@ -22,11 +23,9 @@ import matplotlib.pyplot as plt
 
 # function to generate and return the matrix
 def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16, opts = {}, method="simple"):
-        
-    # out degree of the vertices
-    #outdeg = np.zeros(N)
-    #outdeg[0:m] = group_size
 
+    random.seed(opts['seed'])
+    # tests must be less than half or will not be able to satisfy all constraints
     try:
         assert m <= math.ceil(N/2)
     except AssertionError:
@@ -35,7 +34,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
             + ", m = " + str(m) + " must be less than N/2 = " + str(math.ceil(N/2)) \
             + " (or else some individuals will be tested more than the max times)")
         print(errstr)
-        #sys.exit()
+        sys.exit()
 
     # tests we are able to run per individual
     try:
@@ -50,7 +49,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
 
     tests_per_individual = min(max_tests_per_individual, math.floor(m*group_size/N))
 
-    if opts["verbose"]:
+    if opts['verbose']:
         print("tests_per_individual = " + str(tests_per_individual))
 
     # out degree of the vertices
@@ -61,7 +60,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
     outdeg = np.zeros(N+m)
     outdeg[N:N+m] = group_size
 
-    if opts["verbose"]:
+    if opts['verbose']:
         print("before fixing")
         print("outdeg = {}".format(np.sum(outdeg)))
         print("indeg = {}".format(np.sum(indeg)))
@@ -81,7 +80,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
             print("in degree sequence: {}".format(indeg.tolist()))
             sys.exit()
 
-    if opts["verbose"]:
+    if opts['verbose']:
         print("after fixing")
         print("outdeg = {}".format(np.sum(outdeg)))
         print("indeg = {}".format(np.sum(indeg)))
@@ -90,7 +89,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
     #outdeg = outdeg*3
     try:
         #g = igraph.Graph.Degree_Sequence(outdeg.tolist(),method="vl")
-        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),method="no_multiple") # options are "no_multiple" or "simple"
+        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),method) # options are "no_multiple" or "simple"
         #g = igraph.Graph.Erdos_Renyi(10,m=5,directed=False,loops=False)
     except igraph._igraph.InternalError as err:
         print("igraph InternalError (likely invalid outdeg or indeg sequence): {0}".format(err))
@@ -101,7 +100,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
         print("Unexpected error:", sys.exec_info()[0])
     else:
         A = np.array(g.get_adjacency()._get_data())
-        if opts["verbose"]:
+        if opts['verbose']:
             print(g)
             print(A)
             print("before resizing")
@@ -111,27 +110,49 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
 
         A = A[N:m+N,0:N]
 
-        if opts["verbose"]:
+        check_bipartite = g.is_bipartite()
+        row_sum = np.sum(A,axis=1)
+        col_sum = np.sum(A,axis=0)
+
+        if opts['verbose']:
             print(A)
             print("after resizing")
             print(A.shape)
-            print("row sum {}".format(np.sum(A,axis=1)))
-            print("column sum {}".format(np.sum(A,axis=0)))
-            print("g is bipartite: {}".format(g.is_bipartite()))
+            print("row sum {}".format(row_sum))
+            print("column sum {}".format(col_sum))
+            print("max row sum {}".format(max(row_sum)))
+            print("max column sum {}".format(max(col_sum)))
+            print("min row sum {}".format(min(row_sum)))
+            print("min column sum {}".format(min(col_sum)))
+            print("g is bipartite: {}".format(check_bipartite))
 
-        if opts["plotting"]:
+        if opts['plotting']:
             layout = g.layout("auto")
             visual_style = {}
-            visual_style["vertex_size"] = 10
-            visual_style["layout"] = layout
-            visual_style["edge_width"] = 0.2
-            visual_style["edge_arrow_width"] = 0.1
-            visual_style["bbox"] = (1200, 1200)
+            visual_style['vertex_size'] = 10
+            visual_style['layout'] = layout
+            visual_style['edge_width'] = 0.2
+            visual_style['edge_arrow_width'] = 0.1
+            visual_style['bbox'] = (1200, 1200)
             igraph.drawing.plot(g, **visual_style)
 
-        if opts["saving"]:
+        if opts['saving']:
             data = {}
             data['A'] = A
+            data['bipartite'] = check_bipartite
+            data['indeg'] = indeg
+            data['outdeg'] = outdeg
+            data['min_col_sum'] = min(col_sum)
+            data['min_row_sum'] = min(row_sum)
+            data['max_col_sum'] = max(col_sum)
+            data['max_row_sum'] = max(row_sum)
+            data['m'] = m
+            data['N'] = N
+            data['group_size'] = group_size
+            data['max_tests_per_individual'] = max_tests_per_individual
+            data['opts'] = opts
+            data['method'] = method
+            data['seed'] = opts['seed']
             sio.savemat('./run_data.mat', data)
 
     return A
@@ -142,9 +163,10 @@ if __name__ == '__main__':
     print("Loaded igraph version {}".format(igraph.__version__))
 
     opts = {}
-    opts["verbose"] = False
-    opts["plotting"] = True
-    opts["saving"] = True
+    opts['verbose'] = False
+    opts['plotting'] = True
+    opts['saving'] = True
+    opts['seed'] = 0
 
     # maximum size of each group (#1s on each row)
     group_size = 30
@@ -153,13 +175,13 @@ if __name__ == '__main__':
     max_tests_per_individual = 15
 
     # number of tests
-    m = 3000
+    m = 300
 
     # total population size
-    N = 6000
+    N = 600
 
     A = gen_measurement_matrix(m, N, group_size, max_tests_per_individual, opts = opts, method="simple")
 
-    if opts["verbose"]:
+    if opts['verbose']:
         print("Generated adjacency matrix of size:")
         print(A.shape)

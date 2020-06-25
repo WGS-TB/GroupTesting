@@ -36,4 +36,14 @@ if __name__ == '__main__':
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)
 
+    # generate the infected status of the individuals
 
+    # generate the data corresponding to the group tests
+
+    # solve the system using decoder with CPLEX
+
+    # evaluate the accuracy of the solution
+
+    # final report generation, cleanup, etc.
+
+    # final output and end

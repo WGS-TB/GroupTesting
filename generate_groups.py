@@ -24,13 +24,18 @@ import scipy.io as sio
 # import plotting and data-manipulation tools
 #import matplotlib.pyplot as plt
 
+"""
+Unit testing to be added later
+"""
 #class TestMeasurementMatrix(unittest.TestCase):
 #
 #    def test_make_graph(self):
 #        gen_measurement_matrix(opts)
         
 
-# function to generate and return the matrix
+"""
+Function to generate and return the matrix
+"""
 def gen_measurement_matrix(opts):
 
     # set the seed used for graph generation to that passed in the options
@@ -111,6 +116,10 @@ def gen_measurement_matrix(opts):
     # generate the graph
     try:
         g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),opts['graph_gen_method']) # options are "no_multiple" or "simple"
+        assert np.sum(outdeg) == len(g.get_edgelist())
+    except AssertionError:
+        errstr = ("Assertion Failed: Require [sum(outdeg) = " + str(np.sum(outdeg)) + "] == [" \
+            + str(np.sum(indeg)) + " = sum(indeg)] == [ |E(G)| = " + str(len(g.get_edgelist())) + "]")
     except igraph._igraph.InternalError as err:
         print("igraph InternalError (likely invalid outdeg or indeg sequence): {0}".format(err))
         print("out degree sequence: {}".format(outdeg.tolist()))
@@ -192,7 +201,7 @@ if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 300
+    opts['m'] = 150
     opts['N'] = 600
     opts['group_size'] = 30
     opts['max_tests_per_individual'] = 15

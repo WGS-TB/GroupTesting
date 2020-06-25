@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun 25 13:45:50 2020
+
+@author: ndexter
+"""
+
 # import standard libraries
 import sys, math
 import random
@@ -19,14 +27,19 @@ import scipy.io as sio
 #class TestMeasurementMatrix(unittest.TestCase):
 #
 #    def test_make_graph(self):
-#        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),method="simple")
+#        gen_measurement_matrix(opts)
         
 
 # function to generate and return the matrix
-def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16, opts = {}, method="simple"):
+def gen_measurement_matrix(opts):
 
     # set the seed used for graph generation to that passed in the options
     random.seed(opts['seed'])
+
+    m = opts['m']
+    N = opts['N']
+    group_size = opts['group_size']
+    max_tests_per_individual = opts['max_tests_per_individual']
 
     # tests must be less than half or will not be able to satisfy all constraints
     try:
@@ -97,7 +110,7 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
 
     # generate the graph
     try:
-        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),method) # options are "no_multiple" or "simple"
+        g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),opts['graph_gen_method']) # options are "no_multiple" or "simple"
     except igraph._igraph.InternalError as err:
         print("igraph InternalError (likely invalid outdeg or indeg sequence): {0}".format(err))
         print("out degree sequence: {}".format(outdeg.tolist()))
@@ -163,14 +176,10 @@ def gen_measurement_matrix(m, N, group_size = 30, max_tests_per_individual = 16,
             data['min_row_sum'] = min(row_sum)
             data['max_col_sum'] = max(col_sum)
             data['max_row_sum'] = max(row_sum)
-            data['m'] = m
-            data['N'] = N
-            data['group_size'] = group_size
-            data['max_tests_per_individual'] = max_tests_per_individual
             data['opts'] = opts
-            data['method'] = method
+            data['graph_gen_method'] = opts['graph_gen_method']
             data['seed'] = opts['seed']
-            sio.savemat('./run_data.mat', data)
+            sio.savemat('./' + opts['run_ID'] + '_generate_groups_output.mat', data)
 
     # return the adjacency matrix of the graph
     return A
@@ -183,25 +192,19 @@ if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
+    opts['m'] = 300
+    opts['N'] = 600
+    opts['group_size'] = 30
+    opts['max_tests_per_individual'] = 15
+    opts['graph_gen_method'] = 'simple'
     opts['verbose'] = False
-    opts['plotting'] = True
+    opts['plotting'] = False
     opts['saving'] = True
+    opts['run_ID'] = 'GT_matrix_generation_component'
     opts['seed'] = 0
 
-    # maximum size of each group (#1s on each row)
-    group_size = 30
-
-    # maximum number of tests we can run per individual (#1s on each column)
-    max_tests_per_individual = 15
-
-    # number of tests
-    m = 300
-
-    # total population size
-    N = 600
-
     # generate the measurement matrix with igraph
-    A = gen_measurement_matrix(m, N, group_size, max_tests_per_individual, opts = opts, method="simple")
+    A = gen_measurement_matrix(opts)
 
     # print shape of matrix
     if opts['verbose']:

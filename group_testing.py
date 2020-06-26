@@ -26,7 +26,7 @@ if __name__ == '__main__':
     opts['N'] = N
     opts['group_size'] = group_size
     opts['max_tests_per_individual'] = max_tests_per_individual
-    opts['graph_gen_method'] = 'simple'
+    opts['graph_gen_method'] = 'no_multiple'
     opts['verbose'] = False
     opts['plotting'] = False
     opts['saving'] = True

@@ -218,7 +218,7 @@ def gen_measurement_matrix(opts):
             data['opts'] = opts
             data['graph_gen_method'] = opts['graph_gen_method']
             data['seed'] = opts['seed']
-            sio.savemat('./' + opts['run_ID'] + '_generate_groups_output.mat', data)
+            sio.savemat(opts['run_ID'] + '_generate_groups_output.mat', data)
 
     # return the adjacency matrix of the graph
     return A

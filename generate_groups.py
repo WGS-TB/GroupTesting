@@ -231,10 +231,10 @@ if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 10
-    opts['N'] = 50
-    opts['group_size'] = 20
-    opts['max_tests_per_individual'] = 10
+    opts['m'] = 100
+    opts['N'] = 500
+    opts['group_size'] = 30
+    opts['max_tests_per_individual'] = 15
     opts['graph_gen_method'] = 'no_multiple' # options are "no_multiple" or "simple"
     opts['verbose'] = True #False
     opts['plotting'] = True #False

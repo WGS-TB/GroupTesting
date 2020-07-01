@@ -16,25 +16,18 @@ np.set_printoptions(edgeitems=60, linewidth=100000,
 import scipy.io as sio
 
 """
-Function to generate the infected status of individuals (a vector)
+Function to generate the results of the tests from the measurement matrix A 
+and the status vector u
 """
-def gen_status_vector(opts):
+def gen_test_vector(A, u, opts):
 
     random.seed(opts['seed'])
 
-    # generate a random vector having sparsity level s
-    indices = random.sample(range(opts['N']), opts['s'])
-    u = np.zeros((opts['N'],1))
-    for i in indices:
-        u[i] = 1
+    # generate the tests directly from A and u
+    b = np.matmul(A,u)
 
-    try:
-        assert np.sum(u) == opts['s']
-    except AssertionError:
-        errstr = ("Assertion Failed: opts['s'] = " + str(opts['s']) \
-            + ", since sum(u) = " + str(np.sum(u))) 
-        print(errstr)
-        sys.exit()
+    # rescale test results to 1
+    b = np.minimum(b,1)
 
     # save data to a MATLAB ".mat" file
     if opts['saving']:
@@ -43,31 +36,31 @@ def gen_status_vector(opts):
         else:
             data = {}
 
-        data['u'] = u
-        data['opts'] = opts
-        data['seed'] = opts['seed']
+        data['b'] = b
         sio.savemat(opts['data_filename'], data)
 
     # return the vector, where the nth component represents the infected 
     # status of the nth individual
-    return u
+    return b
 
 if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['N'] = 500
-    opts['s'] = 20
+    opts['m'] = 300
+    opts['N'] = 600
     opts['verbose'] = True #False
     opts['plotting'] = True #False
     opts['saving'] = True
-    opts['run_ID'] = 'GT_status_vector_generation_component'
+    opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
     opts['seed'] = 0
 
-    u = gen_status_vector(opts)
+    A = np.random.randint(2,size=(opts['m'],opts['N']))
+    u = np.random.randint(2,size=opts['N'])
+    b = gen_test_vector(A, u, opts)
 
     # print shape of matrix
     if opts['verbose']:
-        print("Generated status vector of size:")
-        print(u.shape)
+        print("Generated test result vector of size:")
+        print(b.shape)

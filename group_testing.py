@@ -8,6 +8,7 @@ Created on Thu Jun 25 13:45:50 2020
 
 from generate_groups import gen_measurement_matrix
 from generate_individual_status import gen_status_vector
+from generate_test_results import gen_test_vector
 import decoder
 
 # main method for testing
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     u = gen_status_vector(opts)
 
     # generate the data corresponding to the group tests
+    b = gen_test_vector(A, u, opts)
 
     # solve the system using decoder with CPLEX
 

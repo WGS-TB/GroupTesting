@@ -8,6 +8,7 @@ Created on Thu Jun 25 13:45:50 2020
 
 # import standard libraries
 import sys, math
+from os import path
 import random
 import numpy as np
 #np.set_printoptions(threshold=np.inf)
@@ -216,9 +217,7 @@ def gen_measurement_matrix(opts):
             data['max_col_sum'] = max(col_sum)
             data['max_row_sum'] = max(row_sum)
             data['opts'] = opts
-            data['graph_gen_method'] = opts['graph_gen_method']
-            data['seed'] = opts['seed']
-            sio.savemat(opts['run_ID'] + '_generate_groups_output.mat', data)
+            sio.savemat(opts['data_filename'], data)
 
     # return the adjacency matrix of the graph
     return A
@@ -240,6 +239,7 @@ if __name__ == '__main__':
     opts['plotting'] = True #False
     opts['saving'] = True
     opts['run_ID'] = 'GT_matrix_generation_component'
+    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
     opts['seed'] = 0
 
     # generate the measurement matrix with igraph

@@ -10,6 +10,8 @@ import sys, math
 from os import path
 import random
 import numpy as np
+from generate_groups import gen_measurement_matrix
+from generate_individual_status import gen_status_vector
 #np.set_printoptions(threshold=np.inf)
 np.set_printoptions(edgeitems=60, linewidth=100000, 
     formatter=dict(float=lambda x: "%.3g" % x))
@@ -26,8 +28,53 @@ def gen_test_vector(A, u, opts):
     # generate the tests directly from A and u
     b = np.matmul(A,u)
 
+    if opts['verbose']:
+        print('A and u')
+        print(A)
+        print(u)
+        print('before minimum:')
+        print(b)
+
     # rescale test results to 1
     b = np.minimum(b,1)
+
+    if opts['verbose']:
+        print('after minimum')
+        print(b)
+
+    if opts['test_noise_method'] == 'none':
+        print('using noiseless testing model')
+    elif opts['test_noise_method'] == 'binary_symmetric':
+
+        rho = opts['test_noise_probability']
+
+        indices = np.arange(opts['m'])
+
+        weight_vec = np.ones(opts['m'])
+        weight_vec = weight_vec/np.sum(weight_vec)
+
+        num_flip = math.ceil(opts['m']*rho)
+
+        vec = np.random.choice(indices, size=num_flip, replace=False, p=weight_vec)
+
+        #b_noisy = b
+        b_noisy = np.array(b)
+        print('before flipping - left: b, right: b_noisy')
+        print(np.c_[b, b_noisy])
+        for v in vec:
+            b_noisy[v] = (b_noisy[v] + 1) % 2
+
+        if opts['verbose']:
+            print('weight vector')
+            print(weight_vec)
+            print('indices to flip')
+            print(vec)
+            print('after flipping - left: b, right: b_noisy')
+            print(np.c_[b, b_noisy])
+            print('number of affected tests')
+            print(np.sum(abs(b-b_noisy)))
+            print('expected number')
+            print(math.ceil(opts['test_noise_probability']*opts['m']))
 
     # save data to a MATLAB ".mat" file
     if opts['saving']:
@@ -47,17 +94,27 @@ if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 300
-    opts['N'] = 600
-    opts['verbose'] = True #False
-    opts['plotting'] = True #False
-    opts['saving'] = True
+    opts['m'] = 10
+    opts['N'] = 100
+    opts['s'] = math.ceil(0.06*opts['N'])
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
+    opts['test_noise_method'] = 'binary_symmetric'
+    opts['test_noise_probability'] = 0.26
     opts['seed'] = 0
+    opts['group_size'] = 30
+    opts['max_tests_per_individual'] = 15
+    opts['graph_gen_method'] = 'no_multiple'
+    opts['verbose'] = False
+    opts['plotting'] = False
+    opts['saving'] = False
 
-    A = np.random.randint(2,size=(opts['m'],opts['N']))
-    u = np.random.randint(2,size=opts['N'])
+    A = gen_measurement_matrix(opts)
+    u = gen_status_vector(opts)
+
+    opts['verbose'] = True
+    opts['plotting'] = False
+    opts['saving'] = True
     b = gen_test_vector(A, u, opts)
 
     # print shape of matrix

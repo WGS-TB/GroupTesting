@@ -33,6 +33,8 @@ if __name__ == '__main__':
     opts['group_size'] = group_size
     opts['max_tests_per_individual'] = max_tests_per_individual
     opts['graph_gen_method'] = 'no_multiple'
+    opts['test_noise_method'] = 'binary_symmetric'
+    opts['test_noise_probability'] = 0.1
     opts['verbose'] = False
     opts['plotting'] = False
     opts['saving'] = True

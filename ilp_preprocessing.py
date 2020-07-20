@@ -91,6 +91,7 @@ if __name__ == '__main__':
     opts['plotting'] = True #False
     opts['saving'] = True
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
+    opts['test_noise_method'] = 'none'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
     opts['seed'] = 0
 

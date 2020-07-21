@@ -54,6 +54,7 @@ def problem_setup(A, label, param):
 
     # TODO: Right now we need to solve the problem before saving the file! Otherwise it wouldn't save the constraints.
     # TODO: For now we can set a time limit
+    p.solver(int, tm_lim=1)
     p.solve()
     # Save fixed mps format
     p.write_mps(1, None, file_path)
@@ -63,8 +64,8 @@ def problem_setup(A, label, param):
 if __name__ == '__main__':
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 300
-    opts['N'] = 600
+    opts['m'] = 30
+    opts['N'] = 60
     opts['verbose'] = True  # False
     opts['plotting'] = True  # False
     opts['saving'] = True
@@ -77,14 +78,17 @@ if __name__ == '__main__':
     u = np.random.randint(2, size=opts['N'])
     b = gen_test_vector(A, u, opts)
 
+    # Test
+    A = np.array([[1,0,1],[0,0,1],[0,1,0]])
+    b = np.array([1,1,1])
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, r'problem.mps')
 
     param = {}
     param['file_path'] = file_path
     param['lambda_w'] = 1
-    param['lambda_p'] = 0.1
-    param['lambda_n'] = 0.2
+    param['lambda_p'] = 10
+    param['lambda_n'] = 10
     param['verbose'] = False
     param['defective_num'] = None
     param['sensitivity'] = None

@@ -10,14 +10,14 @@ def GT_optimizer(file_path, param, name="cplex"):
         warning_stream_status = param['warning_stream']
         result_stream_status = param['result_stream']
 
-        prob.set_log_stream(log_stream_status)
-        prob.set_error_stream(error_stream_status)
-        prob.set_warning_stream(warning_stream_status)
-        prob.set_results_stream(result_stream_status)
+        #prob.set_log_stream(log_stream_status)
+        #prob.set_error_stream(error_stream_status)
+        #prob.set_warning_stream(warning_stream_status)
+        #prob.set_results_stream(result_stream_status)
 
         # Solving the problem
         prob.solve()
-        sln = [int(v[1:]) for v in prob.variables.get_names() if v[0] == 'w']
+        sln = [ int(v[2:-1]) for v in prob.variables.get_names() if v[0] == 'w' and prob.solution.get_values(v) >= 0.5]
 
     return sln
 
@@ -33,4 +33,5 @@ if __name__ == '__main__':
     param['warning_stream'] = None
     param['result_stream'] = None
 
-    GT_optimizer(file_path=file_path, param=param, name="cplex")
+    sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
+    print(sln)

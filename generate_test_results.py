@@ -35,16 +35,24 @@ def gen_test_vector(A, u, opts):
         print('before minimum:')
         print(b)
 
-    # rescale test results to 1
-    b = np.minimum(b,1)
-
-    if opts['verbose']:
-        print('after minimum')
-        print(b)
-
     if opts['test_noise_method'] == 'none':
         print('using noiseless testing model')
+
+        # rescale test results to 1
+        b = np.minimum(b,1)
+
+        if opts['verbose']:
+            print('after minimum')
+            print(b)
+
     elif opts['test_noise_method'] == 'binary_symmetric':
+
+        # rescale test results to 1
+        b = np.minimum(b,1)
+
+        if opts['verbose']:
+            print('after minimum')
+            print(b)
 
         rho = opts['test_noise_probability']
 
@@ -59,8 +67,10 @@ def gen_test_vector(A, u, opts):
 
         #b_noisy = b
         b_noisy = np.array(b)
-        print('before flipping - left: b, right: b_noisy')
-        print(np.c_[b, b_noisy])
+        if opts['verbose']:
+            print('before flipping - left: b, right: b_noisy')
+            print(np.c_[b, b_noisy])
+
         for v in vec:
             b_noisy[v] = (b_noisy[v] + 1) % 2
 
@@ -75,6 +85,26 @@ def gen_test_vector(A, u, opts):
             print(np.sum(abs(b-b_noisy)))
             print('expected number')
             print(math.ceil(opts['test_noise_probability']*opts['m']))
+
+    elif opts['test_noise_method'] == 'threshold':
+
+        theta_l = opts['theta_l']
+        theta_u = opts['theta_u']
+
+        Asum = np.sum(A, axis = 1)
+        for i in range(opts['m']):
+            if b[i]/Asum[i] >= opts['theta_u']:
+                b[i] = 1
+            elif b[i]/Asum[i] <= opts['theta_l']:
+                b[i] = 0
+            elif b[i]/Asum[i] >= opts['theta_l'] and b[i]/Asum[i] <= opts['theta_u']:
+                b[i] = np.random.randint(2)
+
+        if opts['verbose']:
+            print('after threshold noise')
+            print(b)
+
+
 
     # save data to a MATLAB ".mat" file
     if opts['saving']:
@@ -99,8 +129,11 @@ if __name__ == '__main__':
     opts['s'] = math.ceil(0.06*opts['N'])
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['test_noise_method'] = 'binary_symmetric'
+    #opts['test_noise_method'] = 'binary_symmetric'
+    opts['test_noise_method'] = 'threshold'
     opts['test_noise_probability'] = 0.26
+    opts['theta_l'] = 0.05
+    opts['theta_u'] = 0.10
     opts['seed'] = 0
     opts['group_size'] = 30
     opts['max_tests_per_individual'] = 15

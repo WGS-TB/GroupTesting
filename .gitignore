@@ -1,5 +1,6 @@
-
+test.py
 *.swp
 *.mat
 *.pyc
 .DS_Store
+.idea

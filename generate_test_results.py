@@ -129,11 +129,16 @@ if __name__ == '__main__':
     opts['s'] = math.ceil(0.06*opts['N'])
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
+
+    # parameters for binary symmetric noise
     #opts['test_noise_method'] = 'binary_symmetric'
+    #opts['test_noise_probability'] = 0.26
+
+    # parameters for threshold noise
     opts['test_noise_method'] = 'threshold'
-    opts['test_noise_probability'] = 0.26
     opts['theta_l'] = 0.05
     opts['theta_u'] = 0.10
+
     opts['seed'] = 0
     opts['group_size'] = 30
     opts['max_tests_per_individual'] = 15

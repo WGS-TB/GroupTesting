@@ -3,3 +3,4 @@ test.py
 *.mat
 *.pyc
 .DS_Store
+.idea

@@ -65,14 +65,17 @@ def gen_test_vector(A, u, opts):
 
         vec = np.random.choice(indices, size=num_flip, replace=False, p=weight_vec)
 
-        #b_noisy = b
         b_noisy = np.array(b)
         if opts['verbose']:
             print('before flipping - left: b, right: b_noisy')
             print(np.c_[b, b_noisy])
 
+        # flip the resulting entries
         for v in vec:
             b_noisy[v] = (b_noisy[v] + 1) % 2
+
+        # replace the original vector with the noisy vector
+        b = np.array(b_noisy)
 
         if opts['verbose']:
             print('weight vector')
@@ -104,7 +107,56 @@ def gen_test_vector(A, u, opts):
             print('after threshold noise')
             print(b)
 
+    elif opts['test_noise_method'] == 'permutation':
 
+        # rescale test results to 1
+        b = np.minimum(b,1)
+
+        if opts['verbose']:
+            print('after minimum')
+            print(b)
+
+        # percentage of indices to permute
+        rho = opts['test_noise_probability']
+
+        # get the indices from which to select a subset to permute
+        indices = np.arange(opts['m'])
+
+        # permute all indices with equal probability 
+        weight_vec = np.ones(opts['m'])
+        weight_vec = weight_vec/np.sum(weight_vec)
+
+        # determine the number of indices that need to be permuted
+        num_permute = math.ceil(opts['m']*rho)
+
+        # choose the indices to permute
+        vec = np.random.choice(indices, size=num_permute, replace=False, p=weight_vec)
+
+        # copy b into a new vector for adding noise
+        b_noisy = np.array(b)
+
+        if opts['verbose']:
+            print('before permuting - left: b, right: b_noisy')
+            print(np.c_[b, b_noisy])
+
+        # find a permutation of the randomly selected indices
+        permuted_vec = np.random.permutation(vec)
+
+        if opts['verbose']:
+            print(vec)
+            print(permuted_vec)
+            print(b[vec])
+            print(b[permuted_vec])
+
+        # permute the original test results to add noise
+        b_noisy[vec] = b_noisy[permuted_vec]
+        
+        if opts['verbose']:
+            print('after permuting - left: b, right: b_noisy')
+            print(np.c_[b, b_noisy])
+
+        # replace the original b with its noisy version
+        b = np.array(b_noisy)
 
     # save data to a MATLAB ".mat" file
     if opts['saving']:
@@ -124,9 +176,9 @@ if __name__ == '__main__':
 
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 10
-    opts['N'] = 100
-    opts['s'] = math.ceil(0.06*opts['N'])
+    opts['m'] = 20
+    opts['N'] = 400
+    opts['s'] = math.ceil(0.04*opts['N'])
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
@@ -135,9 +187,13 @@ if __name__ == '__main__':
     #opts['test_noise_probability'] = 0.26
 
     # parameters for threshold noise
-    opts['test_noise_method'] = 'threshold'
-    opts['theta_l'] = 0.05
-    opts['theta_u'] = 0.10
+    #opts['test_noise_method'] = 'threshold'
+    #opts['theta_l'] = 0.05
+    #opts['theta_u'] = 0.10
+
+    # parameters for permutation noise
+    opts['test_noise_method'] = 'permutation'
+    opts['test_noise_probability'] = 0.15
 
     opts['seed'] = 0
     opts['group_size'] = 30

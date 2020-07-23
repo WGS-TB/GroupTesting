@@ -23,140 +23,145 @@ and the status vector u
 """
 def gen_test_vector(A, u, opts):
 
+    # set the seed used for test result noise
     random.seed(opts['seed'])
+    np.random.seed(opts['seed'])
 
     # generate the tests directly from A and u
     b = np.matmul(A,u)
 
     if opts['verbose']:
-        print('A and u')
-        print(A)
-        print(u)
         print('before minimum:')
         print(b)
 
-    if opts['test_noise_method'] == 'none':
-        print('using noiseless testing model')
+    for method in opts['test_noise_methods']:
 
-        # rescale test results to 1
-        b = np.minimum(b,1)
+        if method == 'truncation':
 
-        if opts['verbose']:
-            print('after minimum')
-            print(b)
+            # rescale test results to 1
+            b_noisy = np.minimum(b,1)
 
-    elif opts['test_noise_method'] == 'binary_symmetric':
+            if opts['verbose']:
+                print('after minimum')
+                print(np.c_[b, b_noisy])
 
-        # rescale test results to 1
-        b = np.minimum(b,1)
+            # replace the original vector with the noisy vector
+            b = np.array(b_noisy)
 
-        if opts['verbose']:
-            print('after minimum')
-            print(b)
+        elif method == 'binary_symmetric':
 
-        rho = opts['test_noise_probability']
+            rho = opts['binary_symmetric_noise_prob']
 
-        indices = np.arange(opts['m'])
+            indices = np.arange(opts['m'])
 
-        weight_vec = np.ones(opts['m'])
-        weight_vec = weight_vec/np.sum(weight_vec)
+            weight_vec = np.ones(opts['m'])
+            weight_vec = weight_vec/np.sum(weight_vec)
 
-        num_flip = math.ceil(opts['m']*rho)
+            num_flip = math.ceil(opts['m']*rho)
 
-        vec = np.random.choice(indices, size=num_flip, replace=False, p=weight_vec)
+            vec = np.random.choice(indices, size=num_flip, replace=False, p=weight_vec)
 
-        b_noisy = np.array(b)
-        if opts['verbose']:
-            print('before flipping - left: b, right: b_noisy')
-            print(np.c_[b, b_noisy])
+            # copy b into a new vector for adding noise
+            b_noisy = np.array(b)
 
-        # flip the resulting entries
-        for v in vec:
-            b_noisy[v] = (b_noisy[v] + 1) % 2
+            if opts['verbose']:
+                print('before flipping')
+                print(b_noisy)
 
-        # replace the original vector with the noisy vector
-        b = np.array(b_noisy)
+            # flip the resulting entries
+            for v in vec:
+                b_noisy[v] = (b_noisy[v] + 1) % 2
 
-        if opts['verbose']:
-            print('weight vector')
-            print(weight_vec)
-            print('indices to flip')
-            print(vec)
-            print('after flipping - left: b, right: b_noisy')
-            print(np.c_[b, b_noisy])
-            print('number of affected tests')
-            print(np.sum(abs(b-b_noisy)))
-            print('expected number')
-            print(math.ceil(opts['test_noise_probability']*opts['m']))
+            if opts['verbose']:
+                print('weight vector')
+                print(weight_vec)
+                print('indices to flip')
+                print(vec)
+                print('after flipping - left: b, right: b_noisy')
+                print(np.c_[b, b_noisy])
+                print('number of affected tests')
+                print(np.sum(abs(b-b_noisy)))
+                print('expected number')
+                print(math.ceil(opts['binary_symmetric_noise_prob']*opts['m']))
 
-    elif opts['test_noise_method'] == 'threshold':
+            # replace the original vector with the noisy vector
+            b = np.array(b_noisy)
 
-        theta_l = opts['theta_l']
-        theta_u = opts['theta_u']
+        elif method == 'threshold':
 
-        Asum = np.sum(A, axis = 1)
-        for i in range(opts['m']):
-            if b[i]/Asum[i] >= opts['theta_u']:
-                b[i] = 1
-            elif b[i]/Asum[i] <= opts['theta_l']:
-                b[i] = 0
-            elif b[i]/Asum[i] >= opts['theta_l'] and b[i]/Asum[i] <= opts['theta_u']:
-                b[i] = np.random.randint(2)
+            # find the group sizes
+            Asum = np.sum(A, axis = 1)
 
-        if opts['verbose']:
-            print('after threshold noise')
-            print(b)
+            # copy b into a new vector for adding noise
+            b_noisy = np.array(b)
 
-    elif opts['test_noise_method'] == 'permutation':
+            if opts['verbose']:
+                print('before threshold noise')
+                print(b_noisy)
 
-        # rescale test results to 1
-        b = np.minimum(b,1)
+            # apply the threshold noise to b_noisy
+            for i in range(opts['m']):
+                if b_noisy[i]/Asum[i] >= opts['theta_u']:
+                    b_noisy[i] = 1
+                elif b_noisy[i]/Asum[i] <= opts['theta_l']:
+                    b_noisy[i] = 0
+                elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b[i]/Asum[i] <= opts['theta_u']:
+                    b_noisy[i] = np.random.randint(2)
 
-        if opts['verbose']:
-            print('after minimum')
-            print(b)
+            if opts['verbose']:
+                print('after threshold noise - left: b, right: b_noisy')
+                print(np.c_[b, b_noisy])
 
-        # percentage of indices to permute
-        rho = opts['test_noise_probability']
+            # replace the original vector with the noisy vector
+            b = np.array(b_noisy)
 
-        # get the indices from which to select a subset to permute
-        indices = np.arange(opts['m'])
+        elif method == 'permutation':
 
-        # permute all indices with equal probability 
-        weight_vec = np.ones(opts['m'])
-        weight_vec = weight_vec/np.sum(weight_vec)
+            # percentage of indices to permute
+            rho = opts['permutation_noise_prob']
 
-        # determine the number of indices that need to be permuted
-        num_permute = math.ceil(opts['m']*rho)
+            # get the indices from which to select a subset to permute
+            indices = np.arange(opts['m'])
 
-        # choose the indices to permute
-        vec = np.random.choice(indices, size=num_permute, replace=False, p=weight_vec)
+            # permute all indices with equal probability 
+            weight_vec = np.ones(opts['m'])
+            weight_vec = weight_vec/np.sum(weight_vec)
 
-        # copy b into a new vector for adding noise
-        b_noisy = np.array(b)
+            # determine the number of indices that need to be permuted
+            num_permute = math.ceil(opts['m']*rho)
 
-        if opts['verbose']:
-            print('before permuting - left: b, right: b_noisy')
-            print(np.c_[b, b_noisy])
+            # choose the indices to permute
+            vec = np.random.choice(indices, size=num_permute, replace=False, p=weight_vec)
 
-        # find a permutation of the randomly selected indices
-        permuted_vec = np.random.permutation(vec)
+            # copy b into a new vector for adding noise
+            b_noisy = np.array(b)
 
-        if opts['verbose']:
-            print(vec)
-            print(permuted_vec)
-            print(b[vec])
-            print(b[permuted_vec])
+            if opts['verbose']:
+                print('before permuting')
+                print(b_noisy)
 
-        # permute the original test results to add noise
-        b_noisy[vec] = b_noisy[permuted_vec]
-        
-        if opts['verbose']:
-            print('after permuting - left: b, right: b_noisy')
-            print(np.c_[b, b_noisy])
+            # find a permutation of the randomly selected indices
+            permuted_vec = np.random.permutation(vec)
 
-        # replace the original b with its noisy version
-        b = np.array(b_noisy)
+            if opts['verbose']:
+                print('vector of indices to permute')
+                print(vec)
+                print('permutation of randomly selected indices')
+                print(permuted_vec)
+                print('original vector on indices to permute')
+                print(b_noisy[vec])
+                print('resulting permuted test results associated with those indices')
+                print(b_noisy[permuted_vec])
+
+            # permute the original test results to add noise
+            b_noisy[vec] = b_noisy[permuted_vec]
+            
+            if opts['verbose']:
+                print('after permuting - left: b, right: b_noisy')
+                print(np.c_[b, b_noisy])
+
+            # replace the original vector with the noisy vector
+            b = np.array(b_noisy)
 
     # save data to a MATLAB ".mat" file
     if opts['saving']:
@@ -182,18 +187,23 @@ if __name__ == '__main__':
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
-    # parameters for binary symmetric noise
-    #opts['test_noise_method'] = 'binary_symmetric'
-    #opts['test_noise_probability'] = 0.26
+    # noise types to test
+    opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
 
-    # parameters for threshold noise
-    #opts['test_noise_method'] = 'threshold'
-    #opts['theta_l'] = 0.05
-    #opts['theta_u'] = 0.10
-
-    # parameters for permutation noise
-    opts['test_noise_method'] = 'permutation'
-    opts['test_noise_probability'] = 0.15
+    for method in opts['test_noise_methods']:
+        print('adding ' + method + ' noise', end = ' ')
+        if method == 'truncation':
+            print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
+        if method == 'threshold':
+            opts['theta_l'] = 0.02
+            opts['theta_u'] = 0.10
+            print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))
+        elif method == 'binary_symmetric':
+            opts['binary_symmetric_noise_prob'] = 0.26
+            print('with binary_symmetric_noise_probability = ' + str(opts['binary_symmetric_noise_prob']))
+        elif method == 'permutation':
+            opts['permutation_noise_prob'] = 0.15
+            print('with permutation_noise_probability = ' + str(opts['permutation_noise_prob']))
 
     opts['seed'] = 0
     opts['group_size'] = 30

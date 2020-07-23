@@ -14,35 +14,41 @@ import decoder
 # main method for testing
 if __name__ == '__main__': 
 
+    # options for setting up group testing problem
+    opts = {}
+
+    # unique run ID for prepending to file names
+    opts['run_ID'] = 'debugging'
+
     # specify number of tests m, population size N, sparsity level s
-    m = 300
-    N = 600
-    s = 30
+    opts['m'] = 300
+    opts['N'] = 600
+    opts['s'] = 30
+
+    # specify the seed for initializing all of the random number generators
+    opts['seed'] = 0
 
     # specify group size and maximum number of tests per individual
-    group_size = 30
-    max_tests_per_individual = 15
+    opts['group_size'] = 30
+    opts['max_tests_per_individual'] = 15
 
-    # options for plotting, verbose output, saving, seed
-    opts = {}
-    opts['run_ID'] = 'debugging'
-    opts['m'] = m
-    opts['N'] = N
-    opts['s'] = s
-    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['group_size'] = group_size
-    opts['max_tests_per_individual'] = max_tests_per_individual
+    # specify the graph generation method for generating the groups
     opts['graph_gen_method'] = 'no_multiple'
+
+    # specify the noise model(s)
     #opts['test_noise_method'] = 'binary_symmetric'
-    #opts['test_noise_probability'] = 0.1
     opts['test_noise_method'] = 'threshold'
     opts['test_noise_probability'] = 0.26
     opts['theta_l'] = 0.05
     opts['theta_u'] = 0.10
-    opts['verbose'] = True#False
+
+    # specify verbosity, plotting, and whether to generate MATLAB save files
+    opts['verbose'] = False
     opts['plotting'] = False
     opts['saving'] = True
-    opts['seed'] = 0
+
+    # specify the file name for generating MATLAB save files
+    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)

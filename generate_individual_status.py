@@ -20,7 +20,9 @@ Function to generate the infected status of individuals (a vector)
 """
 def gen_status_vector(opts):
 
+    # set the seed used for status generation
     random.seed(opts['seed'])
+    np.random.seed(opts['seed'])
 
     # generate a random vector having sparsity level s
     indices = random.sample(range(opts['N']), opts['s'])

@@ -41,6 +41,7 @@ def gen_measurement_matrix(opts):
 
     # set the seed used for graph generation to the options seed
     random.seed(opts['seed'])
+    np.random.seed(opts['seed'])
 
     # (slightly) shorter references for options
     m = opts['m']

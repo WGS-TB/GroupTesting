@@ -22,27 +22,15 @@ def GT_optimizer(file_path, param, name="cplex"):
 
         # Solving the problem
         prob.solve()
-        groupTestingSln = {'w': [int(v[2:-1]) for v in prob.variables.get_names() if
-                                 v[0] == 'w' and prob.solution.get_values(v) >= 0.5],
-                           'Fn': [int(v[3:-1]) for v in prob.variables.get_names() if
-                                  v[0:2] == 'ep' and prob.solution.get_values(v) >= 0.5],
-                           'Fp': [int(v[3:-1]) for v in prob.variables.get_names() if
-                                  v[0:2] == 'en' and prob.solution.get_values(v) >= 0.5]}
-        #print(prob.solution.get_objective_value())
+        sln = [int(v[2:-1]) for v in prob.variables.get_names() if v[0] == 'w' and prob.solution.get_values(v) >= 0.5]
     elif name == "gurobi":
         import gurobipy as gp
         from gurobipy import GRB
         prob = gp.read(file_path)
         prob.optimize()
-        groupTestingSln = {'w': [int(v.varName[2:-1]) for v in prob.getVars() if
-                                 v.varName[0] == 'w' and v.x >= 0.5],
-                           'Fn': [int(v.varName[3:-1]) for v in prob.getVars() if
-                                  v.varName[0:2] == 'ep' and v.x >= 0.5],
-                           'Fp': [int(v.varName[3:-1]) for v in prob.getVars() if
-                                  v.varName[0:2] == 'en' and v.x >= 0.5]}
-        #print(prob.objVal)
+        sln = [int(v.varName[2:-1]) for v in prob.getVars() if v.varName[0] == 'w' and v.x >= 0.5]
 
-    return groupTestingSln
+    return sln
 
 
 if __name__ == '__main__':
@@ -56,5 +44,5 @@ if __name__ == '__main__':
     param['warning_stream'] = None
     param['result_stream'] = None
 
-    sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
-    #print(sln)
+    sln = GT_optimizer(file_path=file_path, param=param, name="gurobi")
+    print(sln)

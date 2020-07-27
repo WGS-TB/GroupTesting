@@ -52,8 +52,8 @@ if __name__ == '__main__':
         print('adding ' + method + ' noise', end=' ')
         if method == 'truncation':
             print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        if method == 'threshold':
-            opts['theta_l'] = 0.02
+        elif method == 'threshold':
+            opts['theta_l'] = 0.00
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))
         elif method == 'binary_symmetric':

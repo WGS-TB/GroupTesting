@@ -9,6 +9,10 @@ Created on Thu Jun 25 13:45:50 2020
 from generate_groups import gen_measurement_matrix
 from generate_individual_status import gen_status_vector
 from generate_test_results import gen_test_vector
+from model_preprocessing import problem_setup
+from group_testing_optimizer import GT_optimizer
+from group_testing_evaluation import decoder_evaluation
+import os
 import decoder
 
 # main method for testing
@@ -41,10 +45,11 @@ if __name__ == '__main__':
     opts['graph_gen_method'] = 'no_multiple'
 
     # specify the noise model(s)
-    opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
+    # opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = ['truncation', 'threshold']
 
     for method in opts['test_noise_methods']:
-        print('adding ' + method + ' noise', end = ' ')
+        print('adding ' + method + ' noise', end=' ')
         if method == 'truncation':
             print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
         if method == 'threshold':
@@ -61,18 +66,54 @@ if __name__ == '__main__':
     # specify the file name for generating MATLAB save files
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
+    # specify parameters for decoding
+    current_directory = os.getcwd()
+    file_path = os.path.join(current_directory, r'problem.mps')
+
+    param = {}
+    param['file_path'] = file_path
+    param['lambda_w'] = 1
+    param['lambda_p'] = 30
+    param['lambda_n'] = 100
+    param['verbose'] = False
+    param['defective_num'] = None
+    param['sensitivity'] = None
+    param['specificity'] = None
+
+    # specify CPLEX log
+    param['log_stream'] = None
+    param['error_stream'] = None
+    param['warning_stream'] = None
+    param['result_stream'] = None
+
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)
 
     # generate the infected status of the individuals
     u = gen_status_vector(opts)
-
+    u = [i[0] for i in u]
     # generate the data corresponding to the group tests
     b = gen_test_vector(A, u, opts)
+    #-------------------
+    import numpy as np
+    # generate the tests directly from A and u
+    b_none = np.matmul(A,u)
 
-    # solve the system using decoder with CPLEX
+    # rescale test results to 1
+    b_none = np.minimum(b_none, 1)
+    print('difference', len([i for i in range(len(b)) if b[i] != b_none[i]]))
+    #-----------------------
+    # preparing ILP formulation
+    problem_setup(A, b, param)
+    print('Preparation is DONE!')
+
+    # solve the system using decoder with CPLEX/Gurobi/GLPK
+    sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
+    print('Decoding is DONE!')
 
     # evaluate the accuracy of the solution
+    decoder_evaluation(u, sln, opts['N'])
+    print('Evaluation is DONE!')
 
     # final report generation, cleanup, etc.
 

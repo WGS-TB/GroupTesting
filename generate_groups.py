@@ -209,7 +209,7 @@ def gen_measurement_matrix(opts):
         # save data to a MATLAB ".mat" file
         if opts['saving']:
             data = {}
-            data['A'] = A
+            #data['A'] = A
             data['bipartite'] = check_bipartite
             data['indeg'] = indeg
             data['outdeg'] = outdeg

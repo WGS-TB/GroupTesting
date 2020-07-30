@@ -70,14 +70,25 @@ def multi_process_group_testing(opts, param):
     ev_result['s'] = opts['s']
     ev_result['seed'] = opts['seed']
     ev_result['group_size'] = opts['group_size']
+    ev_result['prevalence'] = opts['prevalence']
+    ev_result['rho'] = opts['rho']
     return ev_result
 
 # main method for testing
 if __name__ == '__main__':
+
     # options for setting up group testing problem
-    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': 300, 'N': 600, 's': i,
-            'seed': 0, 'group_size': 30, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',
-            'test_noise_methods': ['truncation']} for i in [30,40,50]]
+    N_list = [100, 1000, 10000]
+    seed_list = range(5)
+    group_size_list = [8, 16, 32]
+    p_list = np.arange(0.02, 0.22, 0.02)
+    rho_list = np.arange(0.05, 1.05, 0.05)
+
+    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int(p*N/r), 'N': N, 's': p*N,
+            'seed': seed, 'group_size': g, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',
+            'test_noise_methods': ['truncation'], 'prevalence': p,'rho': r} for seed in seed_list for N in N_list for g in group_size_list
+           for p in p_list for r in rho_list]
+    pd.DataFrame(opts).to_csv('Results/opts.csv')
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,
              'defective_num': None, 'sensitivity': None, 'specificity': None, 'log_stream': None, 'error_stream': None,
@@ -87,7 +98,7 @@ if __name__ == '__main__':
         results = pool.starmap(multi_process_group_testing, itertools.product(opts,[param]))
         pool.close()
         pool.join()
-    column_names = ['N', 'm', 's', 'group_size', 'seed', 'tn', 'fp', 'fn', 'tp']
+    column_names = ['N', 'm', 's', 'group_size', 'seed', 'prevalence', 'rho', 'tn', 'fp', 'fn', 'tp']
     pd.DataFrame(results).reindex(columns=column_names).to_csv('Results/CM.csv')
 
     # final report generation, cleanup, etc.

@@ -207,18 +207,19 @@ def gen_measurement_matrix(opts):
             igraph.drawing.plot(g, **visual_style)
 
         # save data to a MATLAB ".mat" file
-        # if opts['saving']:
-        #     data = {}
-        #     data['A'] = A
-        #     data['bipartite'] = check_bipartite
-        #     data['indeg'] = indeg
-        #     data['outdeg'] = outdeg
-        #     data['min_col_sum'] = min(col_sum)
-        #     data['min_row_sum'] = min(row_sum)
-        #     data['max_col_sum'] = max(col_sum)
-        #     data['max_row_sum'] = max(row_sum)
-        #     data['opts'] = opts
-        #     sio.savemat(opts['data_filename'], data)
+
+        if opts['saving']:
+            data = {}
+            #data['A'] = A
+            data['bipartite'] = check_bipartite
+            data['indeg'] = indeg
+            data['outdeg'] = outdeg
+            data['min_col_sum'] = min(col_sum)
+            data['min_row_sum'] = min(row_sum)
+            data['max_col_sum'] = max(col_sum)
+            data['max_row_sum'] = max(row_sum)
+            data['opts'] = opts
+            sio.savemat(opts['data_filename'], data)
 
     # return the adjacency matrix of the graph
     return A

@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # specify the noise model(s)
     #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-    opts['test_noise_methods'] = ['truncation' ]
+    opts['test_noise_methods'] = ['truncation']
 
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end=' ')

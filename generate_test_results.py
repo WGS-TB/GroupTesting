@@ -95,6 +95,8 @@ def gen_test_vector(A, u, opts):
             # find the group sizes
             Asum = np.sum(A, axis = 1)
 
+            print('sum is ' + str(Asum.shape))
+
             # copy b into a new vector for adding noise
             b_noisy = np.array(b)
 
@@ -104,12 +106,14 @@ def gen_test_vector(A, u, opts):
 
             # apply the threshold noise to b_noisy
             for i in range(opts['m']):
-                if b_noisy[i]/Asum[i] >= opts['theta_u']:
-                    b_noisy[i] = 1
-                elif b_noisy[i]/Asum[i] <= opts['theta_l']:
-                    b_noisy[i] = 0
-                elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
-                    b_noisy[i] = np.random.randint(2)
+
+                if b_noisy[i] == 1:
+                    if b_noisy[i]/Asum[i] >= opts['theta_u']:
+                        b_noisy[i] = 1
+                    elif b_noisy[i]/Asum[i] <= opts['theta_l']:
+                        b_noisy[i] = 0
+                    elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
+                        b_noisy[i] = np.random.randint(2)
 
             if opts['verbose']:
                 print('after threshold noise - left: b, right: b_noisy')
@@ -191,13 +195,14 @@ if __name__ == '__main__':
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
     # noise types to test
-    #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-    opts['test_noise_methods'] = ['threshold', 'truncation']
+
+    opts['test_noise_methods'] = ['threshold','truncation']#['truncation', 'threshold', 'binary_symmetric', 'permutation']
+
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end = ' ')
         if method == 'truncation':
             print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        if method == 'threshold':
+        elif method == 'threshold':
             opts['theta_l'] = 0.02
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))

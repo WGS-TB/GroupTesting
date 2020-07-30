@@ -30,9 +30,6 @@ def gen_test_vector(A, u, opts):
     # generate the tests directly from A and u
     b = np.matmul(A,u)
 
-    # rescale test results to 1
-    b = np.minimum(b, 1)
-
     if opts['verbose']:
         print('before minimum:')
         print(b)

@@ -30,6 +30,9 @@ def gen_test_vector(A, u, opts):
     # generate the tests directly from A and u
     b = np.matmul(A,u)
 
+    # rescale test results to 1
+    b = np.minimum(b, 1)
+
     if opts['verbose']:
         print('before minimum:')
         print(b)
@@ -105,7 +108,7 @@ def gen_test_vector(A, u, opts):
                     b_noisy[i] = 1
                 elif b_noisy[i]/Asum[i] <= opts['theta_l']:
                     b_noisy[i] = 0
-                elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b[i]/Asum[i] <= opts['theta_u']:
+                elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
                     b_noisy[i] = np.random.randint(2)
 
             if opts['verbose']:
@@ -164,14 +167,14 @@ def gen_test_vector(A, u, opts):
             b = np.array(b_noisy)
 
     # save data to a MATLAB ".mat" file
-    if opts['saving']:
-        if path.exists(opts['data_filename']):
-            data = sio.loadmat(opts['data_filename'])
-        else:
-            data = {}
-
-        data['b'] = b
-        sio.savemat(opts['data_filename'], data)
+    # if opts['saving']:
+    #     if path.exists(opts['data_filename']):
+    #         data = sio.loadmat(opts['data_filename'])
+    #     else:
+    #         data = {}
+    #
+    #     data['b'] = b
+    #     sio.savemat(opts['data_filename'], data)
 
     # return the vector, where the nth component represents the infected 
     # status of the nth individual
@@ -188,8 +191,8 @@ if __name__ == '__main__':
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
 
     # noise types to test
-    opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-
+    #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = ['threshold', 'truncation']
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end = ' ')
         if method == 'truncation':

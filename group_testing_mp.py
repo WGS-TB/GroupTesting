@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jun 25 13:45:50 2020
-
-@author: ndexter
+@author: hzabeti
 """
 
 from generate_groups import gen_measurement_matrix
@@ -13,42 +11,17 @@ from model_preprocessing import problem_setup
 from group_testing_optimizer import GT_optimizer
 from group_testing_evaluation import decoder_evaluation
 from group_testing_reporter import decoder_reporter
+from multiprocessing import Pool
+import numpy as np
+import pandas as pd
+import itertools
 import os
-import decoder
+import uuid
 
-# main method for testing
-if __name__ == '__main__': 
 
-    # options for setting up group testing problem
-    opts = {}
-
-    # unique run ID for prepending to file names
-    opts['run_ID'] = 'debugging'
-
-    # specify verbosity, plotting, and whether to generate MATLAB save files
-    opts['verbose'] = False
-    opts['plotting'] = False
-    opts['saving'] = True
-
-    # specify number of tests m, population size N, sparsity level s
-    opts['m'] = 300
-    opts['N'] = 600
-    opts['s'] = 30
-
-    # specify the seed for initializing all of the random number generators
-    opts['seed'] = 0
-
-    # specify group size and maximum number of tests per individual
-    opts['group_size'] = 30
-    opts['max_tests_per_individual'] = 15
-
-    # specify the graph generation method for generating the groups
-    opts['graph_gen_method'] = 'no_multiple'
-
-    # specify the noise model(s)
-    #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-    opts['test_noise_methods'] = ['truncation' ]
-
+def multi_process_group_testing(opts, param):
+    current_directory = os.getcwd()
+    temp_unique_key = uuid.uuid1()
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end=' ')
         if method == 'truncation':
@@ -63,29 +36,10 @@ if __name__ == '__main__':
         elif method == 'permutation':
             opts['permutation_noise_prob'] = 0.15
             print('with permutation_noise_probability = ' + str(opts['permutation_noise_prob']))
-
     # specify the file name for generating MATLAB save files
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-
-    # specify parameters for decoding
-    current_directory = os.getcwd()
-    file_path = os.path.join(current_directory, r'problem.mps')
-
-    param = {}
+    file_path = os.path.join(current_directory, r'{}_problem.mps'.format(temp_unique_key))
     param['file_path'] = file_path
-    param['lambda_w'] = 1
-    param['lambda_p'] = 30
-    param['lambda_n'] = 100
-    param['verbose'] = False
-    param['defective_num'] = None
-    param['sensitivity'] = None
-    param['specificity'] = None
-
-    # specify CPLEX log
-    param['log_stream'] = None
-    param['error_stream'] = None
-    param['warning_stream'] = None
-    param['result_stream'] = None
 
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)
@@ -93,17 +47,10 @@ if __name__ == '__main__':
     # generate the infected status of the individuals
     u = gen_status_vector(opts)
     u = [i[0] for i in u]
+
     # generate the data corresponding to the group tests
     b = gen_test_vector(A, u, opts)
-    #-------------------
-    import numpy as np
-    # generate the tests directly from A and u
-    b_none = np.matmul(A,u)
 
-    # rescale test results to 1
-    b_none = np.minimum(b_none, 1)
-    print('difference', len([i for i in range(len(b)) if b[i] != b_none[i]]))
-    #-----------------------
     # preparing ILP formulation
     problem_setup(A, b, param)
     print('Preparation is DONE!')
@@ -112,10 +59,37 @@ if __name__ == '__main__':
     sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
     print('Decoding is DONE!')
 
+    # remove the file
+    os.remove(file_path)
+
     # evaluate the accuracy of the solution
     ev_result = decoder_evaluation(u, sln, opts['N'])
     print('Evaluation is DONE!')
+    ev_result['m'] = opts['m']
+    ev_result['N'] = opts['N']
+    ev_result['s'] = opts['s']
+    ev_result['seed'] = opts['seed']
+    ev_result['group_size'] = opts['group_size']
+    return ev_result
+
+# main method for testing
+if __name__ == '__main__':
+    # options for setting up group testing problem
+    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': 300, 'N': 600, 's': i,
+            'seed': 0, 'group_size': 30, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',
+            'test_noise_methods': ['truncation']} for i in [30,40,50]]
+
+    param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,
+             'defective_num': None, 'sensitivity': None, 'specificity': None, 'log_stream': None, 'error_stream': None,
+             'warning_stream': None, 'result_stream': None}
+
+    with Pool(processes=16) as pool:
+        results = pool.starmap(multi_process_group_testing, itertools.product(opts,[param]))
+        pool.close()
+        pool.join()
+    column_names = ['N', 'm', 's', 'group_size', 'seed', 'tn', 'fp', 'fn', 'tp']
+    pd.DataFrame(results).reindex(columns=column_names).to_csv('Results/CM.csv')
 
     # final report generation, cleanup, etc.
-    decoder_reporter(ev_result)
+
     # final output and end

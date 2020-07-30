@@ -39,16 +39,16 @@ def gen_status_vector(opts):
         sys.exit()
 
     # save data to a MATLAB ".mat" file
-    if opts['saving']:
-        if path.exists(opts['data_filename']):
-            data = sio.loadmat(opts['data_filename'])
-        else:
-            data = {}
-
-        data['u'] = u
-        data['opts'] = opts
-        data['seed'] = opts['seed']
-        sio.savemat(opts['data_filename'], data)
+    # if opts['saving']:
+    #     if path.exists(opts['data_filename']):
+    #         data = sio.loadmat(opts['data_filename'])
+    #     else:
+    #         data = {}
+    #
+    #     data['u'] = u
+    #     data['opts'] = opts
+    #     data['seed'] = opts['seed']
+    #     sio.savemat(opts['data_filename'], data)
 
     # return the vector, where the nth component represents the infected 
     # status of the nth individual

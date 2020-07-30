@@ -79,8 +79,8 @@ if __name__ == '__main__':
     b = gen_test_vector(A, u, opts)
 
     # Test
-    A = np.array([[1,0,0],[1,0,1],[0,1,0]])
-    b = np.array([1,0,1])
+    #A = np.array([[1,0,0],[1,0,1],[0,1,0]])
+    #b = np.array([1,0,1])
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, r'problem.mps')
 

@@ -12,6 +12,7 @@ from group_testing_optimizer import GT_optimizer
 from group_testing_evaluation import decoder_evaluation
 from group_testing_reporter import decoder_reporter
 from multiprocessing import Pool
+from multiprocessing import cpu_count
 import numpy as np
 import pandas as pd
 import itertools
@@ -41,36 +42,40 @@ def multi_process_group_testing(opts, param):
     file_path = os.path.join(current_directory, r'{}_problem.mps'.format(temp_unique_key))
     param['file_path'] = file_path
 
-    # generate the measurement matrix from the given options
-    A = gen_measurement_matrix(opts)
+    try:
+        # generate the measurement matrix from the given options
+        A = gen_measurement_matrix(opts)
 
-    # generate the infected status of the individuals
-    u = gen_status_vector(opts)
-    u = [i[0] for i in u]
+        # generate the infected status of the individuals
+        u = gen_status_vector(opts)
+        u = [i[0] for i in u]
 
-    # generate the data corresponding to the group tests
-    b = gen_test_vector(A, u, opts)
+        # generate the data corresponding to the group tests
+        b = gen_test_vector(A, u, opts)
 
-    # preparing ILP formulation
-    problem_setup(A, b, param)
-    print('Preparation is DONE!')
+        # preparing ILP formulation
+        problem_setup(A, b, param)
+        print('Preparation is DONE!')
 
-    # solve the system using decoder with CPLEX/Gurobi/GLPK
-    sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
-    print('Decoding is DONE!')
+        # solve the system using decoder with CPLEX/Gurobi/GLPK
+        sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
+        print('Decoding is DONE!')
 
-    # remove the file
-    os.remove(file_path)
+        # remove the file
+        os.remove(file_path)
 
-    # evaluate the accuracy of the solution
-    ev_result = decoder_evaluation(u, sln, opts['N'])
+        # evaluate the accuracy of the solution
+        ev_result = decoder_evaluation(u, sln, opts['N'])
+    except:
+        print("Error")
+        ev_result = {'tn': None, 'fp': None, 'fn': None, 'tp': None}
     print('Evaluation is DONE!')
     ev_result['m'] = opts['m']
     ev_result['N'] = opts['N']
     ev_result['s'] = opts['s']
     ev_result['seed'] = opts['seed']
     ev_result['group_size'] = opts['group_size']
-    ev_result['prevalence'] = opts['prevalence']
+    ev_result['delta'] = opts['delta']
     ev_result['rho'] = opts['rho']
     return ev_result
 
@@ -83,9 +88,9 @@ if __name__ == '__main__':
     # group_size_list = [8, 16, 32]
     # p_list = np.arange(0.02, 0.22, 0.02)
     # rho_list = np.arange(0.05, 1.05, 0.05)
-    N_list = [10000]
-    seed_list = range(5)
-    group_size_list = [32]
+    N_list = [1000]
+    seed_list = range(2)
+    group_size_list = [16]
     m_list = np.arange(0.02, 0.22, 0.02)
     rho_list = np.arange(0.05, 1.05, 0.05)
 
@@ -99,11 +104,11 @@ if __name__ == '__main__':
              'defective_num': None, 'sensitivity': None, 'specificity': None, 'log_stream': None, 'error_stream': None,
              'warning_stream': None, 'result_stream': None}
 
-    with Pool(processes=16) as pool:
+    with Pool(cpu_count()) as pool:
         results = pool.starmap(multi_process_group_testing, itertools.product(opts,[param]))
         pool.close()
         pool.join()
-    column_names = ['N', 'm', 's', 'group_size', 'seed', 'prevalence', 'rho', 'tn', 'fp', 'fn', 'tp']
+    column_names = ['N', 'm', 's', 'group_size', 'seed', 'delta', 'rho', 'tn', 'fp', 'fn', 'tp']
     pd.DataFrame(results).reindex(columns=column_names).to_csv('Results/CM.csv')
 
     # final report generation, cleanup, etc.

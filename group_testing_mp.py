@@ -78,16 +78,21 @@ def multi_process_group_testing(opts, param):
 if __name__ == '__main__':
 
     # options for setting up group testing problem
-    N_list = [100, 1000, 10000]
+    # N_list = [100, 1000, 10000]
+    # seed_list = range(5)
+    # group_size_list = [8, 16, 32]
+    # p_list = np.arange(0.02, 0.22, 0.02)
+    # rho_list = np.arange(0.05, 1.05, 0.05)
+    N_list = [10000]
     seed_list = range(5)
-    group_size_list = [8, 16, 32]
-    p_list = np.arange(0.02, 0.22, 0.02)
+    group_size_list = [32]
+    m_list = np.arange(0.02, 0.22, 0.02)
     rho_list = np.arange(0.05, 1.05, 0.05)
 
-    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int(p*N/r), 'N': N, 's': p*N,
+    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int(p*N), 'N': N, 's': int(p*N*r),
             'seed': seed, 'group_size': g, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',
-            'test_noise_methods': ['truncation'], 'prevalence': p,'rho': r} for seed in seed_list for N in N_list for g in group_size_list
-           for p in p_list for r in rho_list]
+            'test_noise_methods': ['truncation'], 'delta': p,'rho': r} for seed in seed_list for N in N_list for g in group_size_list
+           for p in m_list for r in rho_list]
     pd.DataFrame(opts).to_csv('Results/opts.csv')
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,

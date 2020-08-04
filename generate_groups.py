@@ -52,14 +52,17 @@ def gen_measurement_matrix(opts):
     # compute tests per individual needed to satisfy 
     #           N*tests_per_individual == m*group_size
     avg_test_split = math.floor(m*group_size/N)
+    if opts['verbose']:
+        print('number of tests per individual needed to satisfy ' \
+              + '(N*tests_per_individual == m*group_size) = ' + str(avg_test_split))
 
     # verify the given parameters can lead to a valid testing scheme:
     #   if floor(m*group_size/N) > max_tests_per_individual, we would need to 
     #   test each individual more times than the maximum allowed to satisfy 
     #   the group size constraint
     try:
+        # ensure that we're not violating the maximum
         assert avg_test_split <= max_tests_per_individual
-        assert m <= math.floor(N/2)
     except AssertionError:
         errstr = ("Assertion Failed: With group_size = " + str(group_size) \
             + ", since m = " + str(m) + " and N = " + str(N) \
@@ -100,6 +103,14 @@ def gen_measurement_matrix(opts):
         print("sum outdeg (groups) = {}".format(np.sum(outdeg)))
         print("sum indeg (individ) = {}".format(np.sum(indeg)))
 
+    # check if we have too many individuals being tested
+    #if np.sum(indeg) > np.sum(outdeg):
+    while(np.sum(indeg) > np.sum(outdeg)):
+        nz_indeg = indeg[(indeg > 0)]
+        max_indices = np.array(np.where(indeg == nz_indeg.max()))
+        index = np.random.randint(max_indices.shape[1], size=1)
+        indeg[max_indices[0,index]] = indeg[max_indices[0,index]]-1
+            
     # check if the number of tests per individual is less than the max, and, 
     # if we can, fix it
     if tests_per_individual < max_tests_per_individual:
@@ -141,6 +152,7 @@ def gen_measurement_matrix(opts):
 
     # generate the graph
     try:
+        assert igraph._igraph.is_graphical_degree_sequence(outdeg.tolist(),indeg.tolist())
         g = igraph.Graph.Degree_Sequence(outdeg.tolist(),indeg.tolist(),opts['graph_gen_method']) 
         g.vs['vertex_type'] = vtypes
         assert np.sum(outdeg) == len(g.get_edgelist())

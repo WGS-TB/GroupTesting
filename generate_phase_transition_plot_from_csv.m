@@ -11,8 +11,8 @@ set(gcf, 'PaperPosition', [0 0 20 10]);
 set(gcf, 'PaperSize', [20 10]);
 set(gcf,'Position',[200 200 1600 1600])
 
-% open ~/Downloads/CM.csv
-% CM = CM{:,:};
+% open ~/CM.csv
+CM = CM1{:,:};
 
 svals = CM(:,4);
 mvals = CM(:,3);

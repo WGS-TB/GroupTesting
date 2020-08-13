@@ -66,8 +66,8 @@ def multi_process_group_testing(opts, param):
 
         # evaluate the accuracy of the solution
         ev_result = decoder_evaluation(u, sln, opts['N'])
-    except:
-        print("Error")
+    except Exception as e:
+        print(e)
         ev_result = {'tn': None, 'fp': None, 'fn': None, 'tp': None}
     print('Evaluation is DONE!')
     ev_result['m'] = opts['m']
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,
              'defective_num': None, 'sensitivity': None, 'specificity': None, 'log_stream': None, 'error_stream': None,
-             'warning_stream': None, 'result_stream': None}
+             'warning_stream': None, 'result_stream': None, 'noiseless_mode': True, 'LP_relaxation': False}
 
     with Pool(cpu_count()) as pool:
         results = pool.starmap(multi_process_group_testing, itertools.product(opts, [param]))

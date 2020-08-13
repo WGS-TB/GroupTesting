@@ -79,26 +79,23 @@ def multi_process_group_testing(opts, param):
     ev_result['rho'] = opts['rho']
     return ev_result
 
+
 # main method for testing
 if __name__ == '__main__':
-
     # options for setting up group testing problem
 
-    N_list = [100, 1000, 10000]
     seed_list = range(5)
-    group_size_list = [8, 16, 32]
-    m_list = np.arange(0.02, 0.22, 0.02)
     rho_list = np.arange(0.05, 1.05, 0.05)
-    #N_list = [1000]
-    # seed_list = range(5)
-    #group_size_list = [8]
-    # m_list = np.arange(0.02, 0.22, 0.02)
-    # rho_list = np.arange(0.05, 1.05, 0.05)
+    N_list = [5000]
+    group_size_list = [30]
+    m_list = np.arange(0.01, 0.21, 0.01)
 
-    opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int(p*N), 'N': N, 's': int(p*N*r),
-            'seed': seed, 'group_size': g, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',
-            'test_noise_methods': ['truncation'], 'delta': p,'rho': r} for seed in seed_list for N in N_list for g in group_size_list
-           for p in m_list for r in rho_list]
+    opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True,
+             'm': int((p + round(1 / g, 3)) * N), 'N': N, 's': int((p + round(1 / g, 3)) * N * r),
+             'seed': seed, 'group_size': g, 'max_tests_per_individual': 16, 'graph_gen_method': 'no_multiple',
+             'test_noise_methods': ['truncation'], 'delta': round(p + round(1 / g, 3), 3), 'rho': round(r,3)} for seed in seed_list for N in N_list for g in
+            group_size_list
+            for p in m_list for r in rho_list]
     pd.DataFrame(opts).to_csv('Results/opts.csv')
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,
@@ -106,7 +103,7 @@ if __name__ == '__main__':
              'warning_stream': None, 'result_stream': None}
 
     with Pool(cpu_count()) as pool:
-        results = pool.starmap(multi_process_group_testing, itertools.product(opts,[param]))
+        results = pool.starmap(multi_process_group_testing, itertools.product(opts, [param]))
         pool.close()
         pool.join()
     column_names = ['N', 'm', 's', 'group_size', 'seed', 'delta', 'rho', 'tn', 'fp', 'fn', 'tp']

@@ -14,6 +14,8 @@ def problem_setup(A, label, param):
     fixed_defective_num = param['defective_num']
     sensitivity = param['sensitivity']
     specificity = param['specificity']
+    noiseless_mode = param['noiseless_mode']
+    LP_relaxation = param['LP_relaxation']
     m, n = A.shape
     alpha = A.sum(axis=1)
     # label = np.array(label)
@@ -24,14 +26,22 @@ def problem_setup(A, label, param):
     # Initializing the ILP problem
     p = model('GroupTesting')
     p.verbose(param['verbose'])
+    # Variables kind
+    if LP_relaxation:
+        varKind = float
+    else:
+        varKind = bool
     # Variable w
-    w = p.var(name='w', inds=n, kind=bool)
+    w = p.var(name='w', inds=n, kind=varKind)
     # Variable ep
     if len(positive_label)!=0:
-        ep = p.var(name='ep', inds=list(positive_label),kind=float, bounds=(0, 1))
+        ep = p.var(name='ep', inds=list(positive_label), kind=float, bounds=(0, 1))
     # Variable en
     if len(negative_label)!=0:
-        en = p.var(name='en', inds=list(negative_label), kind=bool)
+        if noiseless_mode:
+            en = p.var(name='en', inds=list(negative_label))
+        else:
+            en = p.var(name='en', inds=list(negative_label), kind=bool)
     # Defining the objective function
     prob_obj = sum(lambda_w * w[i] for i in range(n)) + \
                sum(lambda_p * ep[j] for j in positive_label) + \
@@ -42,7 +52,10 @@ def problem_setup(A, label, param):
     for i in positive_label:
         sum(A[i][j] * w[j] for j in range(n)) + ep[i] >= 1
     for i in negative_label:
-        sum(-1 * A[i][j] * w[j] for j in range(n)) + alpha[i] * en[i] >= 0
+        if noiseless_mode:
+            sum(A[i][j] * w[j] for j in range(n)) - en[i] == 0
+        else:
+            sum(-1 * A[i][j] * w[j] for j in range(n)) + alpha[i] * en[i] >= 0
 
     # Additional constraints
 
@@ -64,14 +77,14 @@ def problem_setup(A, label, param):
 if __name__ == '__main__':
     # options for plotting, verbose output, saving, seed
     opts = {}
-    opts['m'] = 30
-    opts['N'] = 60
+    opts['m'] = 3
+    opts['N'] = 5
     opts['verbose'] = True  # False
     opts['plotting'] = True  # False
     opts['saving'] = True
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['test_noise_method'] = 'none'
+    opts['test_noise_methods'] = ['truncation']
     opts['seed'] = 0
 
     A = np.random.randint(2, size=(opts['m'], opts['N']))
@@ -87,11 +100,13 @@ if __name__ == '__main__':
     param = {}
     param['file_path'] = file_path
     param['lambda_w'] = 1
-    param['lambda_p'] = 10
-    param['lambda_n'] = 10
+    param['lambda_p'] = 100
+    param['lambda_n'] = 100
     param['verbose'] = False
     param['defective_num'] = None
     param['sensitivity'] = None
     param['specificity'] = None
+    param['noiseless_mode'] = True
+    param['LP_relaxation'] = False
 
     problem_setup(A, b, param)

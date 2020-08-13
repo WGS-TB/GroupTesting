@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # p_list = np.arange(0.02, 0.22, 0.02)
     # rho_list = np.arange(0.05, 1.05, 0.05)
     N_list = [1000]
-    seed_list = range(2)
+    seed_list = range(5)
     group_size_list = [16]
     m_list = np.arange(0.02, 0.22, 0.02)
     rho_list = np.arange(0.05, 1.05, 0.05)

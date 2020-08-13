@@ -83,16 +83,17 @@ def multi_process_group_testing(opts, param):
 if __name__ == '__main__':
 
     # options for setting up group testing problem
-    # N_list = [100, 1000, 10000]
-    # seed_list = range(5)
-    # group_size_list = [8, 16, 32]
-    # p_list = np.arange(0.02, 0.22, 0.02)
-    # rho_list = np.arange(0.05, 1.05, 0.05)
-    N_list = [1000]
+
+    N_list = [100, 1000, 10000]
     seed_list = range(5)
-    group_size_list = [16]
+    group_size_list = [8, 16, 32]
     m_list = np.arange(0.02, 0.22, 0.02)
     rho_list = np.arange(0.05, 1.05, 0.05)
+    #N_list = [1000]
+    # seed_list = range(5)
+    #group_size_list = [8]
+    # m_list = np.arange(0.02, 0.22, 0.02)
+    # rho_list = np.arange(0.05, 1.05, 0.05)
 
     opts =[{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int(p*N), 'N': N, 's': int(p*N*r),
             'seed': seed, 'group_size': g, 'max_tests_per_individual': 15, 'graph_gen_method': 'no_multiple',

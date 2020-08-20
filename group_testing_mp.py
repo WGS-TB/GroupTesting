@@ -18,6 +18,30 @@ import pandas as pd
 import itertools
 import os
 import uuid
+import datetime
+
+
+def result_path_generator(noiseless, LP_relaxation, N, group_size):
+    currentDate = datetime.datetime.now()
+    dir_name = currentDate.strftime("%d") + '_' + currentDate.strftime("%b") + '_' + currentDate.strftime("%Y")
+    if noiseless:
+        noiseless = 'noiseLess'
+    else:
+        noiseless = 'noisy'
+    if LP_relaxation:
+        LP_relaxation = 'LP'
+    else:
+        LP_relaxation = 'ILP'
+    local_path = "./Results/{}/{}/{}".format(dir_name, noiseless, LP_relaxation)
+    path = os.getcwd()
+    if not os.path.isdir(local_path):
+        try:
+            os.mkdir(path + local_path[1:])
+        except OSError:
+            print("Creation of the directory %s failed" % path + local_path[1:])
+        else:
+            print("Successfully created the directory %s " % path + local_path[1:])
+    return path + local_path[1:] + "/CM_{}_{}.csv".format(N, group_size)
 
 
 def multi_process_group_testing(opts, param):
@@ -93,7 +117,8 @@ if __name__ == '__main__':
     opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True,
              'm': int((p + round(1 / g, 3)) * N), 'N': N, 's': int((p + round(1 / g, 3)) * N * r),
              'seed': seed, 'group_size': g, 'max_tests_per_individual': 16, 'graph_gen_method': 'no_multiple',
-             'test_noise_methods': ['truncation'], 'delta': round(p + round(1 / g, 3), 3), 'rho': round(r,3)} for seed in seed_list for N in N_list for g in
+             'test_noise_methods': ['truncation'], 'delta': round(p + round(1 / g, 3), 3), 'rho': round(r, 3)} for seed
+            in seed_list for N in N_list for g in
             group_size_list
             for p in m_list for r in rho_list]
     pd.DataFrame(opts).to_csv('Results/opts.csv')
@@ -107,7 +132,10 @@ if __name__ == '__main__':
         pool.close()
         pool.join()
     column_names = ['N', 'm', 's', 'group_size', 'seed', 'delta', 'rho', 'tn', 'fp', 'fn', 'tp']
-    pd.DataFrame(results).reindex(columns=column_names).to_csv('Results/CM.csv')
+    # Saving files
+    result_path = result_path_generator(param['noiseless_mode'], param['LP_relaxation'], N_list[0], group_size_list[0])
+    print(result_path)
+    pd.DataFrame(results).reindex(columns=column_names).to_csv(result_path)
 
     # final report generation, cleanup, etc.
 

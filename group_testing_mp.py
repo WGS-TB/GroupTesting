@@ -21,7 +21,7 @@ import uuid
 import datetime
 
 
-def result_path_generator(noiseless, LP_relaxation, N, group_size):
+def result_path_generator(noiseless, LP_relaxation, N, group_size,name):
     currentDate = datetime.datetime.now()
     dir_name = currentDate.strftime("%d") + '_' + currentDate.strftime("%b") + '_' + currentDate.strftime("%Y")
     if noiseless:
@@ -36,12 +36,12 @@ def result_path_generator(noiseless, LP_relaxation, N, group_size):
     path = os.getcwd()
     if not os.path.isdir(local_path):
         try:
-            os.mkdir(path + local_path[1:])
+            os.makedirs(path + local_path[1:])
         except OSError:
             print("Creation of the directory %s failed" % path + local_path[1:])
         else:
             print("Successfully created the directory %s " % path + local_path[1:])
-    return path + local_path[1:] + "/CM_{}_{}.csv".format(N, group_size)
+    return path + local_path[1:] + "/{}_{}_{}.csv".format(name, N, group_size)
 
 
 def multi_process_group_testing(opts, param):
@@ -121,7 +121,7 @@ if __name__ == '__main__':
             in seed_list for N in N_list for g in
             group_size_list
             for p in m_list for r in rho_list]
-    pd.DataFrame(opts).to_csv('Results/opts.csv')
+
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'verbose': False,
              'defective_num': None, 'sensitivity': None, 'specificity': None, 'log_stream': None, 'error_stream': None,
@@ -133,8 +133,10 @@ if __name__ == '__main__':
         pool.join()
     column_names = ['N', 'm', 's', 'group_size', 'seed', 'delta', 'rho', 'tn', 'fp', 'fn', 'tp']
     # Saving files
-    result_path = result_path_generator(param['noiseless_mode'], param['LP_relaxation'], N_list[0], group_size_list[0])
-    print(result_path)
+    opts_path = result_path_generator(param['noiseless_mode'], param['LP_relaxation'], N_list[0], group_size_list[0],'opts')
+    pd.DataFrame(opts).to_csv(opts_path)
+
+    result_path = result_path_generator(param['noiseless_mode'], param['LP_relaxation'], N_list[0], group_size_list[0],'CM')
     pd.DataFrame(results).reindex(columns=column_names).to_csv(result_path)
 
     # final report generation, cleanup, etc.

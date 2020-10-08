@@ -30,7 +30,7 @@ if __name__ == '__main__':
     opts['plotting'] = False
     opts['saving'] = True
 
-    # specify number of tests m, population size N, sparsity level s
+    # specify number of tests m, population size N, infected individuals s
     opts['m'] = 300
     opts['N'] = 600
     opts['s'] = 30

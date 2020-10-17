@@ -30,9 +30,11 @@ if __name__ == '__main__':
     opts['plotting'] = False
     opts['saving'] = True
 
-    # specify number of tests m, population size N, infected individuals s
+    # specify number of tests m and population size N
     opts['m'] = 300
     opts['N'] = 600
+
+    # specify infected individuals s
     opts['s'] = 30
 
     # specify the seed for initializing all of the random number generators

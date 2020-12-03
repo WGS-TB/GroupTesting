@@ -27,9 +27,9 @@ def result_path_generator(noiseless, LP_relaxation, N, group_size, name):
     currentDate = datetime.datetime.now()
     dir_name = currentDate.strftime("%d") + '_' + currentDate.strftime("%b") + '_' + currentDate.strftime("%Y")
     if noiseless:
-        noiseless = 'noiseLess'
+        noiseless = 'NoiseLess'
     else:
-        noiseless = 'noisy'
+        noiseless = 'Noisy'
     if LP_relaxation:
         LP_relaxation = 'LP'
     else:
@@ -78,19 +78,10 @@ def multi_process_group_testing(opts, param):
         # generate the data corresponding to the group tests
         b = gen_test_vector(A, u, opts)
 
-        # # preparing ILP formulation
-        # problem_setup(A, b, param)
-        # print('Preparation is DONE!')
-        #
-        # # solve the system using decoder with CPLEX/Gurobi/GLPK
-        # sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
-        # print('Decoding is DONE!')
-        #
-        # # remove the file
-        # os.remove(file_path)
         c = GroupTestingDecoder(**param)
         c.fit(A, b)
         print('SUM', np.sum(A, axis=0))
+        print('Score:', c.score(A, b))
         # evaluate the accuracy of the solution
         ev_result = decoder_evaluation(u, c.solution())
 
@@ -116,11 +107,10 @@ if __name__ == '__main__':
     # options for setting up group testing problem
     start_time = time.time()
     seed_list = range(10)
-    rho_list = [0.1]
+    #rho_list = [0.1]
     N_list = [1000]
-    prevalence = 0.15
+    prevalence_list = np.arange(0.01, 0.21, 0.01)
     group_size_list = [8]
-    #m_list = np.arange(0.01, 0.51, 0.01)
     m_list = np.arange(0.01, 1.01, 0.01)
     divisibility_list = [8]
 
@@ -131,12 +121,12 @@ if __name__ == '__main__':
     # group_size_list for p in m_list for r in rho_list for d in divisibility_list]
 
     opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True,
-             'm': int(p * N), 'N': N, 's': int(N * prevalence),
+             'm': int(m * N), 'N': N, 's': int(N * p),
              'seed': seed, 'group_size': g, 'max_tests_per_individual': d, 'graph_gen_method': 'no_multiple',
              'test_noise_methods': ['truncation']} for seed
             in seed_list for N in N_list for g in
             group_size_list
-            for p in m_list for d in divisibility_list]
+            for m in m_list for d in divisibility_list for p in prevalence_list]
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'fixed_defective_num': None,
              'sensitivity_threshold': None,

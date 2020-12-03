@@ -150,60 +150,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         pass
 
 
-# def problem_setup(A,label,param):
-#     # This function provide a ILP in form of eq 11 in WABI paper. However it can be changed if we uncomment
-#     # "Additional constraints" below.
-#     file_path = param['file_path']
-#     lambda_w = param['lambda_w']
-#     lambda_p = param['lambda_p']
-#     lambda_n = param['lambda_n']
-#     fixed_defective_num = param['defective_num']
-#     sensitivity = param['sensitivity']
-#     specificity = param['specificity']
-#     noiseless_mode = param['noiseless_mode']
-#     LP_relaxation = param['LP_relaxation']
-#     m, n = A.shape
-#     alpha = A.sum(axis=1)
-#     # label = np.array(label)
-#     positive_label = np.where(label == 1)[0]
-#     negative_label = np.where(label == 0)[0]
-#
-#     # We are using pymprog
-#     # Initializing the ILP problem
-#     p = LpProblem('GroupTesting', LpMinimize)
-#     #p.verbose(param['verbose'])
-#     # Variables kind
-#     if LP_relaxation:
-#         varKind = float
-#     else:
-#         varKind = bool
-#     # Variable w
-#     w = LpVariable.dicts('w', range(n), cat='Binary')
-#     # Variable ep
-#     if len(positive_label) != 0:
-#         ep = LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat='Continuous')
-#     # Variable en
-#     if len(negative_label) != 0:
-#         if noiseless_mode:
-#             en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, cat='Continuous')
-#         else:
-#             en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=1, cat='Binary')
-#     # Defining the objective function
-#     p += lpSum([lambda_w * w[i] for i in range(n)]) + \
-#                lpSum([lambda_p * ep[j] for j in positive_label]) + \
-#                lpSum([lambda_n * en[k] for k in negative_label])
-#     # Constraints
-#     for i in positive_label:
-#         p += lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
-#     for i in negative_label:
-#         if noiseless_mode:
-#             p += lpSum([A[i][j] * w[j] for j in range(n)] - en[i]) == 0
-#         else:
-#             p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
-#     print(p)
-#     p.solve()
-#     print("Status:", LpStatus[p.status])
-
 if __name__ == '__main__':
     # options for plotting, verbose output, saving, seed
     opts = {}
@@ -245,12 +191,5 @@ if __name__ == '__main__':
 
     c = GroupTestingDecoder(**param)
     c.fit(A, b)
-    print('Measurement Matrix:\n', A)
-    print('Test results:\n', b)
-    print('True individual status:\n', u)
-    print('Recoverd individual status:\n', np.array(c.solution()))
-    print('------------')
-    print('A x w=', np.dot(A, c.solution()))
-    print('------------')
-    print(c.score(A, b))
+    print(c.decodingScore(b))
 

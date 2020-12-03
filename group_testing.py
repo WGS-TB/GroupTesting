@@ -120,34 +120,7 @@ if __name__ == '__main__':
     b_none = np.minimum(b_none, 1)
     print('difference', len([i for i in range(len(b)) if b[i] != b_none[i]]))
     #-----------------------
-    # preparing ILP formulation
-    # problem_setup(A, b, param)
-    # print('Preparation is DONE!')
-    #
-    # # solve the system using decoder with CPLEX/Gurobi/GLPK
-    # sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
-    # print('Decoding is DONE!')
-    #
-    # # evaluate the accuracy of the solution
-    # ev_result = decoder_evaluation(u, sln, opts['N'])
-    # print('Evaluation is DONE!')
-    #
-    # # final report generation, cleanup, etc.
-    # decoder_reporter(ev_result)
-    # # final output and end
     c = GroupTestingDecoder(**param)
     c.fit(A, b)
     print('SUM', np.sum(A, axis=0))
-    # evaluate the accuracy of the solution
     ev_result = decoder_evaluation(u, c.solution())
-    # print('Measurement Matrix:\n', A)
-    # print('Test results:\n', b)
-    # print('A x w=\n', c.predict(A))
-    # print('True individual status:\n', u)
-    # print('Recovered individual status:\n', c.solution())
-    # print('------------')
-    # print(c.get_params())
-    # print('------------')
-    # print(c.score(A, b))
-    # print(c.decodingScore(u))
-

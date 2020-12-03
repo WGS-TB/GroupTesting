@@ -13,6 +13,7 @@ from model_preprocessing import problem_setup
 from group_testing_optimizer import GT_optimizer
 from group_testing_evaluation import decoder_evaluation
 from group_testing_reporter import decoder_reporter
+from model_preprocessing_with_pulp import *
 import os
 import decoder
 
@@ -31,16 +32,16 @@ if __name__ == '__main__':
     opts['saving'] = True
 
     # specify number of tests m, population size N, sparsity level s
-    opts['m'] = 300
-    opts['N'] = 600
-    opts['s'] = 30
+    opts['m'] = 500
+    opts['N'] = 1000
+    opts['s'] = 50
 
     # specify the seed for initializing all of the random number generators
     opts['seed'] = 0
 
     # specify group size and maximum number of tests per individual
-    opts['group_size'] = 30
-    opts['max_tests_per_individual'] = 15
+    opts['group_size'] = 16
+    opts['max_tests_per_individual'] = 8
 
     # specify the graph generation method for generating the groups
     opts['graph_gen_method'] = 'no_multiple'
@@ -71,21 +72,34 @@ if __name__ == '__main__':
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, r'problem.mps')
 
-    param = {}
-    param['file_path'] = file_path
-    param['lambda_w'] = 1
-    param['lambda_p'] = 30
-    param['lambda_n'] = 100
-    param['verbose'] = False
-    param['defective_num'] = None
-    param['sensitivity'] = None
-    param['specificity'] = None
+    # param = {}
+    # param['file_path'] = file_path
+    # param['lambda_w'] = 1
+    # param['lambda_p'] = 100
+    # param['lambda_n'] = 100
+    # param['verbose'] = False
+    # param['defective_num'] = None
+    # param['sensitivity'] = None
+    # param['specificity'] = None
+    #
+    # # specify CPLEX log
+    # param['log_stream'] = None
+    # param['error_stream'] = None
+    # param['warning_stream'] = None
+    # param['result_stream'] = None
 
-    # specify CPLEX log
-    param['log_stream'] = None
-    param['error_stream'] = None
-    param['warning_stream'] = None
-    param['result_stream'] = None
+    param = {}
+    #param['file_path'] = file_path
+    param['lambda_w'] = 1
+    param['lambda_p'] = 100
+    param['lambda_n'] = 100
+    #param['verbose'] = False
+    param['fixed_defective_num'] = None
+    param['sensitivity_threshold'] = None
+    param['specificity_threshold'] = None
+    param['is_it_noiseless'] = True
+    param['lp_relaxation'] = False
+    param['solver_name'] = 'CPLEX_PY' #'COIN_CMD'
 
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)
@@ -98,24 +112,40 @@ if __name__ == '__main__':
     #-------------------
     import numpy as np
     # generate the tests directly from A and u
-    b_none = np.matmul(A,u)
+    b_none = np.matmul(A, u)
 
     # rescale test results to 1
     b_none = np.minimum(b_none, 1)
     print('difference', len([i for i in range(len(b)) if b[i] != b_none[i]]))
     #-----------------------
     # preparing ILP formulation
-    problem_setup(A, b, param)
-    print('Preparation is DONE!')
-
-    # solve the system using decoder with CPLEX/Gurobi/GLPK
-    sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
-    print('Decoding is DONE!')
-
+    # problem_setup(A, b, param)
+    # print('Preparation is DONE!')
+    #
+    # # solve the system using decoder with CPLEX/Gurobi/GLPK
+    # sln = GT_optimizer(file_path=file_path, param=param, name="cplex")
+    # print('Decoding is DONE!')
+    #
+    # # evaluate the accuracy of the solution
+    # ev_result = decoder_evaluation(u, sln, opts['N'])
+    # print('Evaluation is DONE!')
+    #
+    # # final report generation, cleanup, etc.
+    # decoder_reporter(ev_result)
+    # # final output and end
+    c = GroupTestingDecoder(**param)
+    c.fit(A, b)
+    print('SUM', np.sum(A, axis=0))
     # evaluate the accuracy of the solution
-    ev_result = decoder_evaluation(u, sln, opts['N'])
-    print('Evaluation is DONE!')
+    ev_result = decoder_evaluation(u, c.solution())
+    # print('Measurement Matrix:\n', A)
+    # print('Test results:\n', b)
+    # print('A x w=\n', c.predict(A))
+    # print('True individual status:\n', u)
+    # print('Recovered individual status:\n', c.solution())
+    # print('------------')
+    # print(c.get_params())
+    # print('------------')
+    # print(c.score(A, b))
+    # print(c.decodingScore(u))
 
-    # final report generation, cleanup, etc.
-    decoder_reporter(ev_result)
-    # final output and end

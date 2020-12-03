@@ -32,7 +32,8 @@ def problem_setup(A, label, param):
     else:
         varKind = bool
     # Variable w
-    w = p.var(name='w', inds=n, kind=varKind)
+    #TODO: Fix w lowerbound and upperbound
+    w = p.var(name='w', inds=n, bounds=(0, 1), kind=varKind)
     # Variable ep
     if len(positive_label)!=0:
         ep = p.var(name='ep', inds=list(positive_label), kind=float, bounds=(0, 1))

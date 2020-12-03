@@ -22,11 +22,11 @@ def GT_optimizer(file_path, param, name="cplex"):
         prob.parameters.timelimit.set(60)
         prob.solve()
         groupTestingSln = {'w': [int(v[2:-1]) for v in prob.variables.get_names() if
-                                 v[0] == 'w' and prob.solution.get_values(v) >= 0.5],
+                                 v[0] == 'w' and prob.solution.get_values(v) >= 1e-05],
                            'Fn': [int(v[3:-1]) for v in prob.variables.get_names() if
-                                  v[0:2] == 'ep' and prob.solution.get_values(v) >= 0.5],
+                                  v[0:2] == 'ep' and prob.solution.get_values(v) >= 1e-05],
                            'Fp': [int(v[3:-1]) for v in prob.variables.get_names() if
-                                  v[0:2] == 'en' and prob.solution.get_values(v) >= 0.5]}
+                                  v[0:2] == 'en' and prob.solution.get_values(v) >= 1e-05]}
         # print(prob.solution.get_objective_value())
     elif name == "gurobi":
         import gurobipy as gp
@@ -34,11 +34,11 @@ def GT_optimizer(file_path, param, name="cplex"):
         prob = gp.read(file_path)
         prob.optimize()
         groupTestingSln = {'w': [int(v.varName[2:-1]) for v in prob.getVars() if
-                                 v.varName[0] == 'w' and v.x >= 0.5],
+                                 v.varName[0] == 'w' and v.x >= 1e-05],
                            'Fn': [int(v.varName[3:-1]) for v in prob.getVars() if
-                                  v.varName[0:2] == 'ep' and v.x >= 0.5],
+                                  v.varName[0:2] == 'ep' and v.x >= 1e-05],
                            'Fp': [int(v.varName[3:-1]) for v in prob.getVars() if
-                                  v.varName[0:2] == 'en' and v.x >= 0.5]}
+                                  v.varName[0:2] == 'en' and v.x >= 1e-05]}
         # print(prob.objVal)
 
     return groupTestingSln

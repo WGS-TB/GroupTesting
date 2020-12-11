@@ -33,17 +33,17 @@ if __name__ == '__main__':
 
     # specify number of tests m and population size N
     opts['m'] = 300
-    opts['N'] = 600
+    opts['N'] = 1000
 
     # specify infected individuals s
-    opts['s'] = 30
+    opts['s'] = 300
 
     # specify the seed for initializing all of the random number generators
     opts['seed'] = 0
 
     # specify group size and maximum number of tests per individual
     opts['group_size'] = 16
-    opts['max_tests_per_individual'] = 8
+    opts['max_tests_per_individual'] = 16
 
     # specify the graph generation method for generating the groups
     opts['graph_gen_method'] = 'no_multiple'
@@ -101,7 +101,9 @@ if __name__ == '__main__':
     param['specificity_threshold'] = None
     param['is_it_noiseless'] = True
     param['lp_relaxation'] = False
-    param['solver_name'] = 'CPLEX_PY' #'COIN_CMD'
+    # param['solver_name'] = 'CPLEX_PY'
+    param['solver_options'] = {'timeLimit': 60, 'logPath': 'log.txt'}
+    param['solver_name'] = 'COIN_CMD'
 
     # generate the measurement matrix from the given options
     A = gen_measurement_matrix(opts)

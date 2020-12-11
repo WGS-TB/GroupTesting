@@ -65,9 +65,20 @@ def multi_process_group_testing(opts, param):
             print('with permutation_noise_probability = ' + str(opts['permutation_noise_prob']))
     # specify the file name for generating MATLAB save files
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    #file_path = os.path.join(current_directory, r'{}_problem.mps'.format(temp_unique_key))
-    #param['file_path'] = file_path
+    # file_path = os.path.join(current_directory, r'{}_problem.mps'.format(temp_unique_key))
+    # param['file_path'] = file_path
 
+    currentDate = datetime.datetime.now()
+    dir_name = currentDate.strftime("%d") + '_' + currentDate.strftime("%b") + '_' + currentDate.strftime("%Y")
+    local_path = "./Logs/{}".format(dir_name)
+    path = os.getcwd()
+    if not os.path.isdir(local_path):
+        try:
+            os.makedirs(path + local_path[1:])
+        except OSError:
+            print("Creation of the directory %s failed" % path + local_path[1:])
+        else:
+            print("Successfully created the directory %s " % path + local_path[1:])
     try:
         # generate the measurement matrix from the given options
         A = gen_measurement_matrix(opts)
@@ -77,13 +88,18 @@ def multi_process_group_testing(opts, param):
 
         # generate the data corresponding to the group tests
         b = gen_test_vector(A, u, opts)
-
+        param['solver_options']['logPath'] = path + local_path[1:] + '/log_{}_{}_{}_{}.txt'.format(opts['N'],
+                                                                                                   opts['group_size'],
+                                                                                                   opts['m'], opts['s'])
+        print(param['solver_options']['logPath'])
         c = GroupTestingDecoder(**param)
         c.fit(A, b)
         print('SUM', np.sum(A, axis=0))
         print('Score:', c.score(A, b))
         # evaluate the accuracy of the solution
         ev_result = decoder_evaluation(u, c.solution())
+        # TODO: this is only for cplex status! Change it to more general form!
+        ev_result['Status'] = c.prob_.cplex_status
 
         # evaluate the accuracy of the solution
         # ev_result = decoder_evaluation(u, sln, opts['N'])
@@ -97,22 +113,22 @@ def multi_process_group_testing(opts, param):
     ev_result['seed'] = opts['seed']
     ev_result['group_size'] = opts['group_size']
     ev_result['max_tests_per_individual'] = opts['max_tests_per_individual']
-    #ev_result['delta'] = opts['delta']
-    #ev_result['rho'] = opts['rho']
+    # ev_result['delta'] = opts['delta']
+    # ev_result['rho'] = opts['rho']
     return ev_result
 
 
 # main method for testing
 if __name__ == '__main__':
     # options for setting up group testing problem
-    start_time = time.time()
     seed_list = range(10)
-    #rho_list = [0.1]
+    # rho_list = [0.1]
     N_list = [1000]
-    prevalence_list = np.arange(0.01, 0.21, 0.01)
-    group_size_list = [8]
+    # prevalence_list = np.concatenate((np.arange(0.005,0.01,0.005),np.arange(0.01, 0.11, 0.01)))
+    prevalence_list = [0.05, 0.1]
+    group_size_list = [16]
     m_list = np.arange(0.01, 1.01, 0.01)
-    divisibility_list = [8]
+    divisibility_list = [16]
 
     # opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int((p + round(1 / g,
     # 3)) * N), 'N': N, 's': int((p + round(1 / g, 3)) * N * r), 'seed': seed, 'group_size': g,
@@ -130,14 +146,16 @@ if __name__ == '__main__':
 
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'fixed_defective_num': None,
              'sensitivity_threshold': None,
-             'specificity_threshold': None, 'is_it_noiseless': True, 'lp_relaxation': False, 'solver_name': 'CPLEX_PY'}
+             'specificity_threshold': None, 'is_it_noiseless': True, 'lp_relaxation': False, 'solver_name': 'CPLEX_PY',
+             'solver_options': {'timeLimit': 600}}
 
     with Pool(cpu_count()) as pool:
         results = pool.starmap(multi_process_group_testing, itertools.product(opts, [param]))
         pool.close()
         pool.join()
     # column_names = ['N', 'm', 's', 'group_size', 'seed', 'delta', 'rho', 'tn', 'fp', 'fn', 'tp']
-    column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp', 'balanced_accuracy']
+    column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
+                    'balanced_accuracy', 'Status']
     # Saving files
     opts_path = result_path_generator(param['is_it_noiseless'], param['lp_relaxation'], N_list[0], group_size_list[0],
                                       'opts')
@@ -147,7 +165,7 @@ if __name__ == '__main__':
                                         'CM')
     pd.DataFrame(results).reindex(columns=column_names).to_csv(result_path)
     end_time = time.time()
-    print(end_time-start_time)
+    print(end_time - start_time)
     # final report generation, cleanup, etc.
 
     # final output and end

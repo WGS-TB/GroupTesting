@@ -9,7 +9,7 @@ from utils import *
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, fixed_defective_num=None, sensitivity_threshold=None,
-                 specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None):
+                 specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None, solver_options=None):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
         self.lambda_p = lambda_p
@@ -29,6 +29,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.lp_relaxation = lp_relaxation
         self.is_it_noiseless = is_it_noiseless  # TODO: Do we need this?
         self.solver_name = solver_name
+        self.solver_options = solver_options
         self.prob_ = None
 
     def fit(self, A, label):
@@ -98,7 +99,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 else:
                     p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
             # TODO: add additional constraints
-        solver = pl.get_solver(self.solver_name)
+        solver = pl.get_solver(self.solver_name, **self.solver_options)
         p.solve(solver)
         # TODO: Check this
         p.roundSolution()
@@ -188,6 +189,7 @@ if __name__ == '__main__':
     param['is_it_noiseless'] = True
     param['lp_relaxation'] = False
     param['solver_name'] = 'COIN_CMD'
+    param['solver_options'] = {'timeLimit': 60, 'logPath': 'log.txt'}
 
     c = GroupTestingDecoder(**param)
     c.fit(A, b)

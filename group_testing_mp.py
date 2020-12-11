@@ -121,6 +121,7 @@ def multi_process_group_testing(opts, param):
 # main method for testing
 if __name__ == '__main__':
     # options for setting up group testing problem
+    start_time = time.time()
     seed_list = range(10)
     # rho_list = [0.1]
     N_list = [1000]

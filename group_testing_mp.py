@@ -88,9 +88,9 @@ def multi_process_group_testing(opts, param):
 
         # generate the data corresponding to the group tests
         b = gen_test_vector(A, u, opts)
-        param['solver_options']['logPath'] = path + local_path[1:] + '/log_{}_{}_{}_{}.txt'.format(opts['N'],
+        param['solver_options']['logPath'] = path + local_path[1:] + '/log_{}_{}_{}_{}_{}.txt'.format(opts['N'],
                                                                                                    opts['group_size'],
-                                                                                                   opts['m'], opts['s'])
+                                                                                                      opts['m'], opts['s'], opts['seed'])
         print(param['solver_options']['logPath'])
         c = GroupTestingDecoder(**param)
         c.fit(A, b)
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # rho_list = [0.1]
     N_list = [1000]
     # prevalence_list = np.concatenate((np.arange(0.005,0.01,0.005),np.arange(0.01, 0.11, 0.01)))
-    prevalence_list = [0.05, 0.1]
+    prevalence_list = [0.1]
     group_size_list = [16]
     m_list = np.arange(0.01, 1.01, 0.01)
     divisibility_list = [16]
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     param = {'lambda_w': 1, 'lambda_p': 100, 'lambda_n': 100, 'fixed_defective_num': None,
              'sensitivity_threshold': None,
              'specificity_threshold': None, 'is_it_noiseless': True, 'lp_relaxation': False, 'solver_name': 'CPLEX_PY',
-             'solver_options': {'timeLimit': 600}}
+             'solver_options': {'timeLimit': 3600}}
 
     with Pool(cpu_count()) as pool:
         results = pool.starmap(multi_process_group_testing, itertools.product(opts, [param]))

@@ -1,0 +1,39 @@
+---
+opts:
+  'run_ID': 'debugging'
+  'verbose': False
+  'plotting': False
+  'saving': True
+  'graph_gen_method': 'no_multiple'
+  'test_noise_methods': ['truncation']
+  'seed':
+    'mode': 'continuous'
+    'values': [0,10,1]
+  'N':
+    'mode': 'discrete'
+    'values': [1000]
+  's':
+    'mode': 'discrete'
+    'values': [5,10,50]
+  'group_size':
+    'mode': 'discrete'
+    'values': [8]
+  'm':
+    'mode': 'continuous'
+    'values': [10, 1010, 10]
+  'max_tests_per_individual':
+    'mode': 'discrete'
+    'values': [8]
+param:
+  'lambda_w': 1
+  'lambda_p': 100
+  'lambda_n': 100
+  'fixed_defective_num': null
+  'sensitivity_threshold': null
+  'specificity_threshold': null
+  'is_it_noiseless': True
+  'lp_relaxation': False
+  'solver_name': 'CPLEX_PY'
+  'solver_options':
+    'mode': 'exact'
+    'timeLimit': 1800

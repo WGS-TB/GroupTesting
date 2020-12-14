@@ -23,7 +23,7 @@ import uuid
 import datetime
 import time
 import yaml
-
+from shutil import copyfile
 
 # def result_path_generator(noiseless, LP_relaxation, N, group_size, name):
 #     currentDate = datetime.datetime.now()
@@ -167,6 +167,9 @@ if __name__ == '__main__':
             print("Creation of the directory %s failed" % log_path)
         else:
             print("Successfully created the directory %s " % log_path)
+    # Copy config file
+
+    copyfile('config.yml', os.path.join(result_path,'config.yml'))
 
     # # options for setting up group testing problem
     # seed_list = range(10)

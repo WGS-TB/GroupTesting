@@ -89,6 +89,7 @@ def multi_process_group_testing(opts, param):
 
         # generate the data corresponding to the group tests
         b = gen_test_vector(A, u, opts)
+
         param['solver_options']['logPath'] = log_path+ '/log_{}_{}_{}_{}_{}.txt'.format(opts['N'],
                                                                                                    opts['group_size'],
                                                                                                    opts['m'], opts['s'],opts['seed'])
@@ -146,6 +147,7 @@ def config_decoder(config_inpt):
 # main method for testing
 if __name__ == '__main__':
     start_time = time.time()
+
     # Read config file
     with open("config.yml", 'r') as config_file:
         config_dict = yaml.load(config_file, Loader=yaml.FullLoader)

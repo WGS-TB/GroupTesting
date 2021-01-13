@@ -96,7 +96,7 @@ if __name__ == '__main__':
     param['lambda_p'] = 100
     param['lambda_n'] = 100
     #param['verbose'] = False
-    param['fixed_defective_num'] = None
+    param['defective_num_lower_bound'] = None
     param['sensitivity_threshold'] = None
     param['specificity_threshold'] = None
     param['is_it_noiseless'] = True

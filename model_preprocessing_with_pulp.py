@@ -8,7 +8,7 @@ from sklearn.metrics import balanced_accuracy_score
 from utils import *
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
-    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, fixed_defective_num=None, sensitivity_threshold=None,
+    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, defective_num_lower_bound=None, sensitivity_threshold=None,
                  specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None, solver_options=None):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
@@ -23,7 +23,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         except AssertionError:
             print("lambda_w should be either int, float or list of numbers")
         # -----------------------------------------
-        self.fixed_defective_num = fixed_defective_num
+        self.defective_num_lower_bound = defective_num_lower_bound
         self.sensitivity_threshold = sensitivity_threshold
         self.specificity_threshold = specificity_threshold
         self.lp_relaxation = lp_relaxation
@@ -70,6 +70,10 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 p += lpSum([A[i][j] * w[j] for j in range(n)]) >= 1
             for i in negative_label:
                 p += lpSum([A[i][j] * w[j] for j in range(n)]) == 0
+            # Prevalence lower-bound
+            if self.defective_num_lower_bound is not None:
+                p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
+
         # --------------------------------------
         # Noisy setting
         else:
@@ -99,6 +103,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 else:
                     p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
             # TODO: add additional constraints
+            # Prevalence lower-bound
+            if self.defective_num_lower_bound is not None:
+                p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
         solver = pl.get_solver(self.solver_name, **self.solver_options)
         p.solve(solver)
         # TODO: Check this

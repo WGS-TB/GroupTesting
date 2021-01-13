@@ -28,7 +28,7 @@ param:
   'lambda_w': 1
   'lambda_p': 100
   'lambda_n': 100
-  'fixed_defective_num': null
+  'defective_num_lower_bound': null
   'sensitivity_threshold': null
   'specificity_threshold': null
   'is_it_noiseless': True

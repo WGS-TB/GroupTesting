@@ -93,6 +93,10 @@ def multi_process_group_testing(opts, param):
         param['solver_options']['logPath'] = log_path+ '/log_{}_{}_{}_{}_{}.txt'.format(opts['N'],
                                                                                                    opts['group_size'],
                                                                                                    opts['m'], opts['s'],opts['seed'])
+        #TODO: quick fix change it later!
+        if param['defective_num_lower_bound'] == 'p':
+            param['defective_num_lower_bound'] = opts['s']
+        #--------------------------
         c = GroupTestingDecoder(**param)
         single_fit_start = time.time()
         c.fit(A, b)

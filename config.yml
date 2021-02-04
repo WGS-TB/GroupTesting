@@ -14,16 +14,16 @@ opts:
     'values': [1000]
   's':
     'mode': 'discrete'
-    'values': [5,10,50]
+    'values': [100]
   'group_size':
     'mode': 'discrete'
-    'values': [8]
+    'values': [6]
   'm':
     'mode': 'continuous'
     'values': [10, 1010, 10]
   'max_tests_per_individual':
     'mode': 'discrete'
-    'values': [8]
+    'values': [6]
 param:
   'lambda_w': 1
   'lambda_p': 100

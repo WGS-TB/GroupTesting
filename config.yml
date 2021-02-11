@@ -5,7 +5,7 @@ opts:
   'plotting': False
   'saving': True
   'graph_gen_method': 'no_multiple'
-  'test_noise_methods': ['truncation']
+  'test_noise_methods': []
   'seed':
     'mode': 'continuous'
     'values': [0,10,1]

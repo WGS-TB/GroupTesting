@@ -49,14 +49,12 @@ if __name__ == '__main__':
     opts['graph_gen_method'] = 'no_multiple'
 
     # specify the noise model(s)
-    #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-    opts['test_noise_methods'] = ['truncation']
+    #opts['test_noise_methods'] = ['threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = []
 
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end=' ')
-        if method == 'truncation':
-            print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        elif method == 'threshold':
+        if method == 'threshold':
             opts['theta_l'] = 0.00
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))

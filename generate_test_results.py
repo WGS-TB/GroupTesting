@@ -110,7 +110,11 @@ def gen_test_vector(A, u, opts):
                     elif b_noisy[i]/Asum[i] <= opts['theta_l']:
                         b_noisy[i] = 0
                     elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
-                        b_noisy[i] = np.random.randint(2)
+                        # probability 1/2 of 0 or 1
+                        #b_noisy[i] = np.random.randint(2)
+
+                        # instead use probability of false negatives = 1/10 
+                        b_noisy[i] = numpy.random.choice(numpy.arange(2), p=[0.1, 0.9])
 
             if opts['verbose']:
                 print('after threshold noise - left: b, right: b_noisy')

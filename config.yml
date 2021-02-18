@@ -5,10 +5,10 @@ opts:
   'plotting': False
   'saving': True
   'graph_gen_method': 'no_multiple'
-  'test_noise_methods': ['truncation']
+  'test_noise_methods': []
   'seed':
     'mode': 'continuous'
-    'values': [0,10,1]
+    'values': [0,1,1]
   'N':
     'mode': 'discrete'
     'values': [10000]
@@ -32,7 +32,7 @@ param:
   'sensitivity_threshold': null
   'specificity_threshold': null
   'is_it_noiseless': True
-  'lp_relaxation': True
+  'lp_relaxation': False
   'solver_name': 'CPLEX_PY'
   'solver_options':
     'mode': 'exact'

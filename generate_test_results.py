@@ -34,21 +34,19 @@ def gen_test_vector(A, u, opts):
         print('before minimum:')
         print(b)
 
+    # rescale test results to 1
+    b_temp = np.minimum(b,1)
+
+    if opts['verbose']:
+        print('after minimum')
+        print(np.c_[b, b_temp])
+
+    # replace the original vector with the noisy vector
+    b = np.array(b_temp)
+
     for method in opts['test_noise_methods']:
 
-        if method == 'truncation':
-
-            # rescale test results to 1
-            b_noisy = np.minimum(b,1)
-
-            if opts['verbose']:
-                print('after minimum')
-                print(np.c_[b, b_noisy])
-
-            # replace the original vector with the noisy vector
-            b = np.array(b_noisy)
-
-        elif method == 'binary_symmetric':
+        if method == 'binary_symmetric':
 
             rho = opts['binary_symmetric_noise_prob']
 
@@ -110,7 +108,11 @@ def gen_test_vector(A, u, opts):
                     elif b_noisy[i]/Asum[i] <= opts['theta_l']:
                         b_noisy[i] = 0
                     elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
-                        b_noisy[i] = np.random.randint(2)
+                        # probability 1/2 of 0 or 1
+                        #b_noisy[i] = np.random.randint(2)
+
+                        # instead use probability of false negatives = 1/10 
+                        b_noisy[i] = np.random.choice(np.arange(2), p=[0.1, 0.9])
 
             if opts['verbose']:
                 print('after threshold noise - left: b, right: b_noisy')
@@ -193,13 +195,11 @@ if __name__ == '__main__':
 
     # noise types to test
 
-    opts['test_noise_methods'] = ['threshold','truncation']#['truncation', 'threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = ['threshold']#['threshold', 'binary_symmetric', 'permutation']
 
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end = ' ')
-        if method == 'truncation':
-            print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        elif method == 'threshold':
+        if method == 'threshold':
             opts['theta_l'] = 0.02
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))

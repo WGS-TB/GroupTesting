@@ -11,19 +11,19 @@ opts:
     'values': [0,10,1]
   'N':
     'mode': 'discrete'
-    'values': [1000]
+    'values': [10000]
   's':
     'mode': 'discrete'
-    'values': [100]
+    'values': [2000]
   'group_size':
     'mode': 'discrete'
-    'values': [6]
+    'values': [3]
   'm':
     'mode': 'continuous'
-    'values': [10, 1010, 10]
+    'values': [100, 10100, 100]
   'max_tests_per_individual':
     'mode': 'discrete'
-    'values': [6]
+    'values': [3]
 param:
   'lambda_w': 1
   'lambda_p': 100
@@ -32,7 +32,7 @@ param:
   'sensitivity_threshold': null
   'specificity_threshold': null
   'is_it_noiseless': True
-  'lp_relaxation': False
+  'lp_relaxation': True
   'solver_name': 'CPLEX_PY'
   'solver_options':
     'mode': 'exact'

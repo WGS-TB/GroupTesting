@@ -169,7 +169,7 @@ if __name__ == '__main__':
     opts['saving'] = True
     opts['run_ID'] = 'GT_test_result_vector_generation_component'
     opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['test_noise_methods'] = ['truncation']
+    opts['test_noise_methods'] = []
     opts['seed'] = 0
 
     A = np.random.randint(2, size=(opts['m'], opts['N']))

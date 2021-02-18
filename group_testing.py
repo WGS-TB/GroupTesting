@@ -16,47 +16,58 @@ from group_testing_reporter import decoder_reporter
 from model_preprocessing_with_pulp import *
 import os
 import decoder
+import argparse
 
 # main method for testing
 if __name__ == '__main__': 
 
     # options for setting up group testing problem
     opts = {}
-
+    parser = argparse.ArgumentParser()
     # unique run ID for prepending to file names
-    opts['run_ID'] = 'debugging'
+    parser.add_argument("--run_ID", default = 'debugging', type = str, help = "String for naming batch of trials in this run")
+    parser.add_argument("--verbose", default = 0, type = int, help = "Switch for verbose output")
+    parser.add_argument("--plotting", default = 0, type = int, help = "Switch for generating plots")
+    parser.add_argument("--saving", default = 1, type = int, help = "Switch for generating MATLAB save files")
+    parser.add_argument("--m", default = 300, type = int, help = "Number of group tests to use")
+    parser.add_argument("--N", default = 1000, type = int, help = "Population size")
+    parser.add_argument("--s", default = 300, type = int, help = "Number of infected individuals")
+    parser.add_argument("--seed", default = 0, type = int, help = "Seed for random number generators")
+    parser.add_argument("--group_size", default = 16, type = int, help = "Size of groups")
+    parser.add_argument("--max_tests_per_individual", default = 16, type = int, help = "Maximum number of tests allowed per individual")
+    parser.add_argument("--graph_gen_method", default = 'no_multiple', type = str, help = "Method for igraph to use in generating the groups")
+
+    opts['run_ID'] = args.run_ID
 
     # specify verbosity, plotting, and whether to generate MATLAB save files
-    opts['verbose'] = False
-    opts['plotting'] = False
-    opts['saving'] = True
+    opts['verbose'] = args.verbose
+    opts['plotting'] = args.plotting
+    opts['saving'] = args.saving
 
     # specify number of tests m and population size N
-    opts['m'] = 5
-    opts['N'] = 10
+    opts['m'] = args.m
+    opts['N'] = args.N
 
     # specify infected individuals s
-    opts['s'] = 3
+    opts['s'] = args.s
 
     # specify the seed for initializing all of the random number generators
-    opts['seed'] = 0
+    opts['seed'] = args.seed
 
     # specify group size and maximum number of tests per individual
-    opts['group_size'] = 16
-    opts['max_tests_per_individual'] = 16
+    opts['group_size'] = args.group_size
+    opts['max_tests_per_individual'] = args.max_tests_per_individual
 
     # specify the graph generation method for generating the groups
-    opts['graph_gen_method'] = 'no_multiple'
+    opts['graph_gen_method'] = args.graph_gen_method
 
     # specify the noise model(s)
-    #opts['test_noise_methods'] = ['truncation', 'threshold', 'binary_symmetric', 'permutation']
-    opts['test_noise_methods'] = ['truncation']
+    #opts['test_noise_methods'] = ['threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = []
 
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end=' ')
-        if method == 'truncation':
-            print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        elif method == 'threshold':
+        if method == 'threshold':
             opts['theta_l'] = 0.00
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))

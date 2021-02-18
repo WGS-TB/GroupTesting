@@ -64,9 +64,7 @@ def path_generator(file_path, file_name, file_format):
 def multi_process_group_testing(opts, param):
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end=' ')
-        if method == 'truncation':
-            print('with no parameters, values in b = Au larger than 1 will be truncated to 1')
-        elif method == 'threshold':
+        if method == 'threshold':
             opts['theta_l'] = 0.00
             opts['theta_u'] = 0.10
             print('with theta_l = ' + str(opts['theta_l']) + ' and theta_u = ' + str(opts['theta_u']))
@@ -187,14 +185,14 @@ if __name__ == '__main__':
     #
     # # opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True, 'm': int((p + round(1 / g,
     # # 3)) * N), 'N': N, 's': int((p + round(1 / g, 3)) * N * r), 'seed': seed, 'group_size': g,
-    # # 'max_tests_per_individual': d, 'graph_gen_method': 'no_multiple', 'test_noise_methods': ['truncation'],
+    # # 'max_tests_per_individual': d, 'graph_gen_method': 'no_multiple', 'test_noise_methods': [],
     # # 'delta': round(p + round(1 / g, 3), 3), 'rho': round(r, 3)} for seed in seed_list for N in N_list for g in
     # # group_size_list for p in m_list for r in rho_list for d in divisibility_list]
     #
     # opts = [{'run_ID': 'debugging', 'verbose': False, 'plotting': False, 'saving': True,
     #          'm': int(m * N), 'N': N, 's': int(N * p),
     #          'seed': seed, 'group_size': g, 'max_tests_per_individual': d, 'graph_gen_method': 'no_multiple',
-    #          'test_noise_methods': ['truncation']} for seed
+    #          'test_noise_methods': []} for seed
     #         in seed_list for N in N_list for g in
     #         group_size_list
     #         for m in m_list for d in divisibility_list for p in prevalence_list]

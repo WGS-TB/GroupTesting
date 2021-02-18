@@ -5,7 +5,7 @@ opts:
   'plotting': False
   'saving': True
   'graph_gen_method': 'no_multiple'
-  'test_noise_methods': ['truncation']
+  'test_noise_methods': []
   'seed':
     'mode': 'continuous'
     'values': [0,1,1]
@@ -14,16 +14,18 @@ opts:
     'values': [10]
   's':
     'mode': 'discrete'
-    'values': [3]
+
+    'values': [100]
   'group_size':
     'mode': 'discrete'
-    'values': [4]
+    'values': [6]
   'm':
     'mode': 'discrete'
     'values': [5]
   'max_tests_per_individual':
     'mode': 'discrete'
-    'values': [4]
+    'values': [6]
+
 param:
   'lambda_w': 1
   'lambda_p': 100

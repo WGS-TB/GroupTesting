@@ -8,12 +8,17 @@ from sklearn.metrics import balanced_accuracy_score
 from utils import *
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
-    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, defective_num_lower_bound=None, sensitivity_threshold=None,
+    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1,lambda_e=None, defective_num_lower_bound=None, sensitivity_threshold=None,
                  specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None, solver_options=None):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
-        self.lambda_p = lambda_p
-        self.lambda_n = lambda_n
+        if lambda_e is not None:
+            # Use lambda_e if both lambda_p and lambda_n have same value
+            self.lambda_p = lambda_e
+            self.lambda_n = lambda_e
+        else:
+            self.lambda_p = lambda_p
+            self.lambda_n = lambda_n
         # -----------------------------------------
         # lambda_w is added as a coefficient for vector w. lambda_w could be used as a vector of prior probabilities.
         # lambda_w default value is 1.
@@ -31,6 +36,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.solver_name = solver_name
         self.solver_options = solver_options
         self.prob_ = None
+        self.ep_cat = 'Continuous'
+        self.en_cat = 'Continuous'
+        self.en_upBound = None
 
     def fit(self, A, label):
         m, n = A.shape
@@ -82,13 +90,11 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             en = []
             # Variable ep
             if len(positive_label) != 0:
-                ep = LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat='Continuous')
+                ep = LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat=self.ep_cat)
             # Variable en
             if len(negative_label) != 0:
-                if self.lp_relaxation:
-                    en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, cat='Continuous')
-                else:
-                    en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=1, cat='Binary')
+                en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
+                                      cat=self.en_cat)
             # Defining the objective function
             p += lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)]) + \
@@ -99,7 +105,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             for i in positive_label:
                 p += lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
             for i in negative_label:
-                if self.lp_relaxation:
+                if self.en_cat == 'Continuous':
                     p += lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
                 else:
                     p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0

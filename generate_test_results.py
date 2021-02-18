@@ -42,7 +42,7 @@ def gen_test_vector(A, u, opts):
         print(np.c_[b, b_temp])
 
     # replace the original vector with the noisy vector
-    b = np.array(b_noisy)
+    b = np.array(b_temp)
 
     for method in opts['test_noise_methods']:
 
@@ -112,7 +112,7 @@ def gen_test_vector(A, u, opts):
                         #b_noisy[i] = np.random.randint(2)
 
                         # instead use probability of false negatives = 1/10 
-                        b_noisy[i] = numpy.random.choice(numpy.arange(2), p=[0.1, 0.9])
+                        b_noisy[i] = np.random.choice(np.arange(2), p=[0.1, 0.9])
 
             if opts['verbose']:
                 print('after threshold noise - left: b, right: b_noisy')

@@ -32,11 +32,11 @@ if __name__ == '__main__':
     opts['saving'] = True
 
     # specify number of tests m and population size N
-    opts['m'] = 300
-    opts['N'] = 1000
+    opts['m'] = 5
+    opts['N'] = 10
 
     # specify infected individuals s
-    opts['s'] = 300
+    opts['s'] = 3
 
     # specify the seed for initializing all of the random number generators
     opts['seed'] = 0
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     param['lambda_p'] = 100
     param['lambda_n'] = 100
     #param['verbose'] = False
-    param['defective_num_lower_bound'] = None
+    param['defective_num_lower_bound'] = 3
     param['sensitivity_threshold'] = None
     param['specificity_threshold'] = None
     param['is_it_noiseless'] = True

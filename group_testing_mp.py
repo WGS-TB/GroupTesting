@@ -95,7 +95,7 @@ def multi_process_group_testing(opts, param):
                                                                                                    opts['m'], opts['s'],opts['seed'])
         #TODO: quick fix change it later!
         if param['defective_num_lower_bound'] == 'p':
-            param['defective_num_lower_bound'] = opts['s']
+            param['defective_num_lower_bound'] = int(opts['s'])
         #--------------------------
         c = GroupTestingDecoder(**param)
         single_fit_start = time.time()

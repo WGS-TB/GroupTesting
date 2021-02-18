@@ -8,22 +8,22 @@ opts:
   'test_noise_methods': ['truncation']
   'seed':
     'mode': 'continuous'
-    'values': [0,10,1]
+    'values': [0,1,1]
   'N':
     'mode': 'discrete'
-    'values': [1000]
+    'values': [10]
   's':
     'mode': 'discrete'
-    'values': [5,10,50]
+    'values': [3]
   'group_size':
     'mode': 'discrete'
-    'values': [8]
+    'values': [4]
   'm':
-    'mode': 'continuous'
-    'values': [10, 1010, 10]
+    'mode': 'discrete'
+    'values': [5]
   'max_tests_per_individual':
     'mode': 'discrete'
-    'values': [8]
+    'values': [4]
 param:
   'lambda_w': 1
   'lambda_p': 100

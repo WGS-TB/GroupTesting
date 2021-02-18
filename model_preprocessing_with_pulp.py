@@ -72,7 +72,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 p += lpSum([A[i][j] * w[j] for j in range(n)]) == 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
-                p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
+                p += lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
+            print(p)
 
         # --------------------------------------
         # Noisy setting

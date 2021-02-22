@@ -5,26 +5,44 @@ opts:
   'plotting': False
   'saving': True
   'graph_gen_method': 'no_multiple'
-  'test_noise_methods': []
+  'test_noise_methods': ['permutation']
+  'permutation_noise_prob':
+    'mode': 'scalar'
+    'values': [0.01]
+  'theta_l':
+    'mode': 'scalar'
+    'values': [0.00]
+  'theta_u':
+    'mode': 'scalar'
+    'values': [0.0625]
+  'binary_symmetric_noise_prob':
+    'mode': 'scalar'
+    'values': [0.26]
   'seed':
-    'mode': 'continuous'
-    'values': [0,1,1]
+    'mode': 'range'
+    'values': [0,10,1]
   'N':
-    'mode': 'discrete'
-    'values': [10]
+    'mode': 'scalar'
+    'values': [1000]
   's':
-    'mode': 'discrete'
-
-    'values': [100]
+    'mode': 'scalar'
+    'values': [50]
   'group_size':
-    'mode': 'discrete'
-    'values': [6]
+    'mode': 'scalar'
+    'values': [16]
   'm':
-    'mode': 'discrete'
-    'values': [5]
+    'mode': 'range'
+    'values': [10,1010,10]
   'max_tests_per_individual':
-    'mode': 'discrete'
-    'values': [6]
+    'mode': 'scalar'
+    'values': [16]
+
+lambda_selection:
+  'cross_validation': True
+  'number_of_folds': 5
+  'param':
+    'lambda_p': [0.125,0.25,0.5,1,2,4,8]
+    'lambda_n': [0.125,0.25,0.5,1,2,4,8]
 
 param:
   'lambda_w': 1

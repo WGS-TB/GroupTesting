@@ -43,7 +43,6 @@ lambda_selection:
   'param':
     'lambda_p': [0.125,0.25,0.5,1,2,4,8]
     'lambda_n': [0.125,0.25,0.5,1,2,4,8]
-
 param:
   'lambda_w': 1
   'lambda_p': 100

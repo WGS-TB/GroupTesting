@@ -12,15 +12,11 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                  specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None, solver_options=None):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
-        if lambda_e is not None:
-            # Use lambda_e if both lambda_p and lambda_n have same value
-            self.lambda_p = lambda_e
-            self.lambda_n = lambda_e
-            print('single lambda!')
-        else:
-            self.lambda_p = lambda_p
-            self.lambda_n = lambda_n
-            print('two lambdas!')
+
+        self.lambda_e = lambda_e
+        self.lambda_p = lambda_p
+        self.lambda_n = lambda_n
+
         # -----------------------------------------
         # lambda_w is added as a coefficient for vector w. lambda_w could be used as a vector of prior probabilities.
         # lambda_w default value is 1.
@@ -43,6 +39,10 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.en_upBound = 1
 
     def fit(self, A, label):
+        if self.lambda_e is not None:
+            # Use lambda_e if both lambda_p and lambda_n have same value
+            self.lambda_p = self.lambda_e
+            self.lambda_n = self.lambda_e
         m, n = A.shape
         alpha = A.sum(axis=1)
         label = np.array(label)
@@ -83,7 +83,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
                 p += lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
-            print(p)
 
         # --------------------------------------
         # Noisy setting
@@ -124,7 +123,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         print("Status:", LpStatus[p.status])
         return self
 
-    def get_params(self, variable_type='w'):
+    def get_params_w(self, deep=True):
+        variable_type = 'w'
         try:
             assert self.prob_ is not None
             # w_solution_dict = dict([(v.name, v.varValue)
@@ -147,7 +147,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # TODO: Pulp uses ASCII sort when we recover the solution. It would cause a lot of problems when we want
             # TODO: to use the solution. We need to use alphabetical sort based on variables names (v.names). To do so
             # TODO: we use utils.py and the following lines of codes
-            w_solution = self.get_params(variable_type='w')
+            w_solution = self.get_params_w()
             index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=natural_keys))}
             w_solution = [v for k, v in sorted(w_solution.items(), key=lambda pair: index_map[pair[0]])]
         except AttributeError:

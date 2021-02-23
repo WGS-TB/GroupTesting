@@ -26,7 +26,7 @@ from sklearn.metrics import roc_curve, auc, balanced_accuracy_score
 from sklearn.metrics import accuracy_score
 
 
-def multi_process_group_testing(opts, param, lambda_selection):
+def multi_process_group_testing(opts, param):
     # for method in opts['test_noise_methods']:
     #     print('adding ' + method + ' noise', end=' ')
     #     if method == 'threshold':
@@ -67,10 +67,13 @@ def multi_process_group_testing(opts, param, lambda_selection):
         if lambda_selection['cross_validation']:
             scoring = dict(Accuracy='accuracy',
                            balanced_accuracy=make_scorer(balanced_accuracy_score))
-            grid = GridSearchCV(c, lambda_selection['param'], cv=lambda_selection['number_of_folds'],
-                                refit='balanced_accuracy', scoring=scoring, n_jobs=-1,
+            print('cross validation')
+            grid = GridSearchCV(estimator=c, param_grid=lambda_selection['param'], cv=lambda_selection['number_of_folds'],
+                                refit='balanced_accuracy', scoring=scoring, n_jobs=None,
                                 return_train_score=True, verbose=10)
             grid.fit(A, b)
+
+            print('fit')
             c = grid.best_estimator_
             pd.DataFrame.from_dict(grid.cv_results_).to_csv(os.path.join(log_path,
                                                                          'cv_results_{}_{}_{}_{}_{}.csv'.format(
@@ -146,7 +149,7 @@ if __name__ == '__main__':
     copyfile('config.yml', os.path.join(result_path, 'config.yml'))
 
     with Pool(cpu_count()) as pool:
-        results = pool.starmap(multi_process_group_testing, itertools.product(opts, param, lambda_selection))
+        results = pool.starmap(multi_process_group_testing, itertools.product(opts, param))
         pool.close()
         pool.join()
 

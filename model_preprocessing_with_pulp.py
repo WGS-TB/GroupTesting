@@ -30,7 +30,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.sensitivity_threshold = sensitivity_threshold
         self.specificity_threshold = specificity_threshold
         self.lp_relaxation = lp_relaxation
-        self.is_it_noiseless = is_it_noiseless  # TODO: Do we need this?
+        self.is_it_noiseless = is_it_noiseless
         self.solver_name = solver_name
         self.solver_options = solver_options
         self.prob_ = None
@@ -117,7 +117,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         solver = pl.get_solver(self.solver_name, **self.solver_options)
         p.solve(solver)
         # TODO: Check this
-        p.roundSolution()
+        if not self.lp_relaxation:
+            p.roundSolution()
         # ----------------
         self.prob_ = p
         print("Status:", LpStatus[p.status])
@@ -150,6 +151,8 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             w_solution = self.get_params_w()
             index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=natural_keys))}
             w_solution = [v for k, v in sorted(w_solution.items(), key=lambda pair: index_map[pair[0]])]
+            if self.lp_relaxation:
+                w_solution = [1 if i > 0 else 0 for i in w_solution]
         except AttributeError:
             raise RuntimeError("You must fit the data first!")
         return w_solution
@@ -199,11 +202,11 @@ if __name__ == '__main__':
     param['lambda_p'] = 100
     param['lambda_n'] = 100
     # param['verbose'] = False
-    param['fixed_defective_num'] = None
+    param['defective_num_lower_bound'] = None
     param['sensitivity_threshold'] = None
     param['specificity_threshold'] = None
     param['is_it_noiseless'] = True
-    param['lp_relaxation'] = False
+    param['lp_relaxation'] = True
     param['solver_name'] = 'COIN_CMD'
     param['solver_options'] = {'timeLimit': 60, 'logPath': 'log.txt'}
 

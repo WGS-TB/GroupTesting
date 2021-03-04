@@ -94,7 +94,7 @@ def gen_test_vector(A, u, opts):
 
             # copy b into a new vector for adding noise
             b_noisy = np.array(b)
-
+            num_of_infected = np.matmul(A,u)
             if opts['verbose']:
                 print('before threshold noise')
                 print(b_noisy)
@@ -103,11 +103,11 @@ def gen_test_vector(A, u, opts):
             for i in range(opts['m']):
 
                 if b_noisy[i] == 1:
-                    if b_noisy[i]/Asum[i] >= opts['theta_u']:
+                    if num_of_infected[i]/Asum[i] >= opts['theta_u']:
                         b_noisy[i] = 1
-                    elif b_noisy[i]/Asum[i] <= opts['theta_l']:
+                    elif num_of_infected[i]/Asum[i] <= opts['theta_l']:
                         b_noisy[i] = 0
-                    elif b_noisy[i]/Asum[i] >= opts['theta_l'] and b_noisy[i]/Asum[i] <= opts['theta_u']:
+                    elif num_of_infected[i]/Asum[i] > opts['theta_l'] and num_of_infected[i]/Asum[i] < opts['theta_u']:
                         # probability 1/2 of 0 or 1
                         #b_noisy[i] = np.random.randint(2)
 

@@ -5,3 +5,7 @@ test.py
 .DS_Store
 .idea
 *.m~
+temp_for_test.py
+Results
+gurobi.log
+log.txt

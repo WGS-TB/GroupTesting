@@ -38,7 +38,7 @@ opts:
     'values': [16]
 
 lambda_selection:
-  'cross_validation': True
+  'cross_validation': False
   'number_of_folds': 5
   'param':
     'lambda_e': [0.125,0.25,0.5,1,2,4,8]

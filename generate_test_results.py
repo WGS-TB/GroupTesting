@@ -140,7 +140,8 @@ def gen_test_vector(A, u, opts):
             try:
                 assert 2*num_permute <= opts['m']
             except AssertionError as e:
-                print(e)
+                print('number of permuted items exceeds m, incorrect range for rho?')
+                sys.exit()
             else:
                 vec = np.random.choice(indices, size=2*num_permute, replace=False, p=weight_vec)
 

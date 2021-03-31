@@ -137,7 +137,13 @@ def gen_test_vector(A, u, opts):
             num_permute = math.ceil(opts['m']*rho)
 
             # choose the indices to permute
-            vec = np.random.choice(indices, size=num_permute, replace=False, p=weight_vec)
+            try:
+                assert 2*num_permute <= opts['m']
+            except AssertionError as e:
+                print('number of permuted items exceeds m, incorrect range for rho?')
+                sys.exit()
+            else:
+                vec = np.random.choice(indices, size=2*num_permute, replace=False, p=weight_vec)
 
             # copy b into a new vector for adding noise
             b_noisy = np.array(b)
@@ -147,20 +153,27 @@ def gen_test_vector(A, u, opts):
                 print(b_noisy)
 
             # find a permutation of the randomly selected indices
-            permuted_vec = np.random.permutation(vec)
+            #permuted_vec = np.random.permutation(vec)
 
-            if opts['verbose']:
-                print('vector of indices to permute')
-                print(vec)
-                print('permutation of randomly selected indices')
-                print(permuted_vec)
-                print('original vector on indices to permute')
-                print(b_noisy[vec])
-                print('resulting permuted test results associated with those indices')
-                print(b_noisy[permuted_vec])
+            #print(vec)
+
+            for i in range(num_permute):
+                b_noisy[vec[i]] = b[vec[i+num_permute]]
+                b_noisy[vec[i+num_permute]] = b[vec[i]]
+                #print(np.c_[indices, b, b_noisy])
+
+            #if opts['verbose']:
+                #print('vector of indices to permute')
+                #print(vec)
+                #print('permutation of randomly selected indices')
+                #print(permuted_vec)
+                #print('original vector on indices to permute')
+                #print(b_noisy[vec])
+                #print('resulting permuted test results associated with those indices')
+                #print(b_noisy[permuted_vec])
 
             # permute the original test results to add noise
-            b_noisy[vec] = b_noisy[permuted_vec]
+            #b_noisy[vec] = b_noisy[permuted_vec]
             
             if opts['verbose']:
                 print('after permuting - left: b, right: b_noisy')
@@ -195,7 +208,8 @@ if __name__ == '__main__':
 
     # noise types to test
 
-    opts['test_noise_methods'] = ['threshold']#['threshold', 'binary_symmetric', 'permutation']
+    opts['test_noise_methods'] = ['permutation']
+    #opts['test_noise_methods'] = ['threshold']#['threshold', 'binary_symmetric', 'permutation']
 
     for method in opts['test_noise_methods']:
         print('adding ' + method + ' noise', end = ' ')

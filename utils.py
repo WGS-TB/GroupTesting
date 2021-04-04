@@ -9,6 +9,7 @@ import os
 import datetime
 import yaml
 import sys
+import warnings
 
 
 def atoi(text):
@@ -32,7 +33,7 @@ def config_decoder(config_inpt):
     # TODO: check the yml file format -> exception handeling
     for keys, vals in config_inpt.items():
         if isinstance(vals, dict):
-            print(vals)
+            #print(vals)
             if config_inpt[keys]['mode'] == 'range':
                 config_inpt[keys] = np.arange(*config_inpt[keys]['values'])
             elif config_inpt[keys]['mode'] == 'scalar':
@@ -46,6 +47,15 @@ def config_decoder(config_inpt):
     return [dict(zip(config_inpt.keys(), vals)) for vals in itertools.product(*config_inpt.values())]
 
 
+def config_input_or_params(current_dict, block_name, generate_label):
+    if 'input' in current_dict.keys():
+        current_setting = {'{}_input'.format(block_name): current_dict['input']}
+    else:
+        current_setting = current_dict['params']
+        current_setting[generate_label] = True
+    return current_setting
+
+
 def config_reader(config_file_name):
     try:
         # Read config file
@@ -56,43 +66,44 @@ def config_reader(config_file_name):
         e = sys.exc_info()[0]
         print("config file can not be found!")
         print("Error:", e)
-    design_param = {'generate_groups': False, 'generate_individual_status': False, 'generate_test_results': False}
+    design_param = {'general': False, 'generate_groups': False, 'generate_individual_status': False,
+                    'generate_test_results': False, 'test_results': False}
     decoder_param = {'decode': False, 'lambda_selection': False, 'evaluation': False}
     # Load params
     if 'design_param' in config_dict.keys():
         try:
-            assert 'general' in config_dict['design_param'].keys(), "You should define general properties of design!"
+            # assert 'general' in config_dict['design_param'].keys(), "You should define general properties of design!"
             general_param = config_dict['design_param']['general']
+            design_param['general'] = True
             design_param.update(general_param)
-            assert 'generate_groups' in config_dict['design_param'].keys(), \
-                "You should define generate_group parameters!"
-            generate_groups = config_dict['design_param']['generate_groups']
-            design_param['generate_groups'] = True
-            design_param.update(generate_groups)
-        except:
-            # TODO: this should be KeyError!
-            e = sys.exc_info()[0]
-            print("config file format is not correct!")
-            print("Error:", e)
-        if 'generate_individual_status' in config_dict['design_param'].keys():
-            try:
-                generate_individual_status = config_dict['design_param']['generate_individual_status']
-                design_param['generate_individual_status'] = True
-                design_param.update(generate_individual_status)
-            except:
-                # TODO: this should be KeyError!
-                e = sys.exc_info()[0]
-                print("Error:", e)
-        if 'generate_test_results' in config_dict['design_param'].keys():
-            try:
-                generate_test_results = config_dict['design_param']['generate_test_results']
-                design_param['generate_test_results'] = True
-                design_param.update(generate_test_results)
-            except:
-                # TODO: this should be KeyError!
-                e = sys.exc_info()[0]
-                print("Error:", e)
+        except KeyError:
+            print("Warning: 'general' block is not found in the config file! We try to recover essential information "
+                  "from the input files!")
+        assert 'groups' in config_dict['design_param'].keys(), \
+            "You should define the 'groups' block in the config file!"
+        generate_groups = config_input_or_params(config_dict['design_param']['groups'], 'groups', 'generate_groups')
+        design_param.update(generate_groups)
+        try:
+            generate_individual_status = config_input_or_params(
+                current_dict=config_dict['design_param']['individual_status'],
+                block_name='individual_status',
+                generate_label='generate_individual_status')
+            design_param.update(generate_individual_status)
+        except KeyError:
+            print("Warning: 'individual_status' block is not found in the config file! Individual status is necessary"
+                  "if the results need to be evaluated!")
+        # if 'test_results' in config_dict['design_param'].keys():
+        try:
+            generate_test_results = config_input_or_params(config_dict['design_param']['test_results'], 'test_results',
+                                                           'generate_test_results')
+            design_param.update(generate_test_results)
+            design_param['test_results'] = True
+        except KeyError:
+            print("Warning: 'test_results' block is not found in the config file! Test results is necessary for"
+                  " decoding!")
     if 'decoder_param' in config_dict.keys():
+        assert design_param['test_results'], "It is not possible to decode without test results! Please define the " \
+                                             "'test_results' block in the config file."
         if 'decode' in config_dict['decoder_param'].keys():
             try:
                 decode_param = config_dict['decoder_param']['decode']

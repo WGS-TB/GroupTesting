@@ -11,35 +11,41 @@ design_param:
       'mode': 'range'
       'values': [10,30,10]
     'verbose': False
-  'generate_groups':
-    'run_ID': 'debugging'
-    'plotting': False
-    'saving': True
-    'graph_gen_method': 'no_multiple'
-    'group_size':
-      'mode': 'scalar'
-      'values': [16]
-    'max_tests_per_individual':
-      'mode': 'scalar'
-      'values': [16]
-  'generate_individual_status':
-    's':
-      'mode': 'scalar'
-      'values': [50]
-  'generate_test_results':
-    'test_noise_methods': ['permutation']
-    'permutation_noise_prob':
-      'mode': 'scalar'
-      'values': [0.01]
-    'theta_l':
-      'mode': 'scalar'
-      'values': [0.00]
-    'theta_u':
-      'mode': 'scalar'
-      'values': [0.0625]
-    'binary_symmetric_noise_prob':
-      'mode': 'scalar'
-      'values': [0.26]
+  'groups':
+    input: 'design_matrix.csv'
+    params:
+      'run_ID': 'debugging'
+      'plotting': False
+      'saving': True
+      'graph_gen_method': 'no_multiple'
+      'group_size':
+        'mode': 'scalar'
+        'values': [16]
+      'max_tests_per_individual':
+        'mode': 'scalar'
+        'values': [16]
+  'individual_status':
+    input: 'individual_status.csv'
+    params:
+      's':
+        'mode': 'scalar'
+        'values': [50]
+  'test_results':
+    'input': 'test_results.csv'
+    'params':
+      'test_noise_methods': ['permutation']
+      'permutation_noise_prob':
+        'mode': 'scalar'
+        'values': [0.01]
+      'theta_l':
+        'mode': 'scalar'
+        'values': [0.00]
+      'theta_u':
+        'mode': 'scalar'
+        'values': [0.0625]
+      'binary_symmetric_noise_prob':
+        'mode': 'scalar'
+        'values': [0.26]
 
 decoder_param:
   'decode':

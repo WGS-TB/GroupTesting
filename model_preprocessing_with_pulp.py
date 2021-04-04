@@ -8,8 +8,9 @@ from sklearn.metrics import balanced_accuracy_score
 from utils import *
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
-    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None, sensitivity_threshold=None,
-                 specificity_threshold=None, lp_relaxation=False, is_it_noiseless=True, solver_name=None, solver_options=None):
+    def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
+                 sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False,
+                 is_it_noiseless=True, solver_name=None, solver_options=None, **kwargs):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
 

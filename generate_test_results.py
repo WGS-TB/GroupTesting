@@ -88,7 +88,7 @@ def gen_test_vector(A, u, opts):
         elif method == 'threshold':
 
             # find the group sizes
-            Asum = np.sum(A, axis = 1)
+            Asum = np.sum(A, axis=1)
 
             print('sum is ' + str(Asum.shape))
 

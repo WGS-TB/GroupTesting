@@ -13,7 +13,7 @@ from model_preprocessing import problem_setup
 from group_testing_optimizer import GT_optimizer
 from group_testing_evaluation import decoder_evaluation
 from group_testing_reporter import decoder_reporter
-from model_preprocessing_with_pulp import *
+from group_testing_decoder import *
 import os
 import decoder
 import argparse

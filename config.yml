@@ -1,58 +1,51 @@
 ---
-design_param:
-  'general':
-    'seed':
-      'mode': 'range'
-      'values': [0,1,1]
-    'N':
-      'mode': 'scalar'
-      'values': [1000]
-    'm':
-      'mode': 'range'
-      'values': [10,30,10]
-    'verbose': False
-  'groups':
-    input: 'design_matrix.csv'
+design:
+  groups:
+    #input: 'design_matrix.csv'
     params:
+      seed: 10
+      N: 1000
+      'm':
+        'mode': 'range'
+        'values': [10,30,10]
+      'verbose': False
       'run_ID': 'debugging'
       'plotting': False
       'saving': True
       'graph_gen_method': 'no_multiple'
       'group_size':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [16]
       'max_tests_per_individual':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [16]
   'individual_status':
     input: 'individual_status.csv'
     params:
       's':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [50]
   'test_results':
     'input': 'test_results.csv'
     'params':
       'test_noise_methods': ['permutation']
       'permutation_noise_prob':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [0.01]
       'theta_l':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [0.00]
       'theta_u':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [0.0625]
       'binary_symmetric_noise_prob':
-        'mode': 'scalar'
+        'mode': 'list'
         'values': [0.26]
 
-decoder_param:
-  'decode':
+decode:
+  'decoder':
     'lambda_w': 1
-    'lambda_e':
-      'mode': 'scalar'
-      'values': [0.125,0.25,0.5,1,2,4,8]
+    'lambda_e': 0.25
     'defective_num_lower_bound': null
     'sensitivity_threshold': null
     'specificity_threshold': null
@@ -60,13 +53,10 @@ decoder_param:
     'lp_relaxation': False
     'solver_name': 'CPLEX_PY'
     'solver_options':
-      'mode': 'exact'
       'timeLimit': 1800
-  'lambda_selection':
-    'cross_validation': False
+    'lambda_selection': True
     'number_of_folds': 2
     'cv_param':
-      'mode': 'exact'
       'lambda_e': [0.125,0.25,0.5,1,2,4,8]
     #'mip':True
   'evaluation':

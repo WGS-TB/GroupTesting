@@ -7,7 +7,7 @@
 from generate_groups import gen_measurement_matrix
 from generate_individual_status import gen_status_vector
 from group_testing_evaluation import decoder_evaluation
-from model_preprocessing_with_pulp import *
+from group_testing_decoder import *
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 import numpy as np
@@ -157,7 +157,6 @@ if __name__ == '__main__':
     # param = config_decoder(config_dict['param'])
     # lambda_selection = param['lambda_selection']
     design_param, decoder_param = config_reader('config.yml')
-    print(design_param,decoder_param)
     # output files path
     path = os.getcwd()
     currentDate = datetime.datetime.now()

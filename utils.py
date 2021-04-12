@@ -71,7 +71,7 @@ def config_reader(config_file_name):
         print("Error:", e)
     design_param = {'generate_groups': False, 'generate_individual_status': False,
                     'generate_test_results': False, 'test_results': False}
-    decoder_param = {'decoder': False, 'lambda_selection': False, 'evaluation': False}
+    decoder_param = {'decoding': False, 'decoder': False, 'lambda_selection': False, 'evaluation': False}
     # Load params
     if 'design' in config_dict.keys():
         assert 'groups' in config_dict['design'].keys(), \
@@ -98,10 +98,11 @@ def config_reader(config_file_name):
     if 'decode' in config_dict.keys():
         assert design_param['test_results'], "It is not possible to decode without test results! Please define the " \
                                              "'test_results' block in the config file."
+        decoder_param['decoding'] =True
         if 'decoder' in config_dict['decode'].keys():
             try:
-                decode_param = config_dict['decode']['decoder']
-                decoder_param['decoder'] = True
+                decode_param = config_input_or_params(config_dict['decode']['decoder'], 'decoder','decoder')
+                #decoder_param['decoder'] = True
                 decoder_param.update(decode_param)
             except:
                 print("decoder format in the config file is not correct!")

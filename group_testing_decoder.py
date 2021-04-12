@@ -102,7 +102,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                         for i in range(n)]) + \
                  lpSum([self.lambda_p * ep[j] for j in positive_label]) + \
                  lpSum([self.lambda_n * en[k] for k in negative_label])
-            # TODO: what if we call ep and en without defining them? above
             # Constraints
             for i in positive_label:
                 p += lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
@@ -111,7 +110,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                     p += lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
                 else:
                     p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
-            # TODO: add additional constraints
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
                 p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound

@@ -122,7 +122,6 @@ def gen_test_vector(A, u, opts):
             b = np.array(b_noisy)
 
         elif method == 'permutation':
-
             # percentage of indices to permute
             rho = opts['permutation_noise_prob']
 

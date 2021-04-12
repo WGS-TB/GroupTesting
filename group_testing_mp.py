@@ -83,61 +83,65 @@ def multi_process_group_testing(design_param, decoder_param):
 
     except Exception as e:
         print(e)
-    try:
-        if decoder_param['decoder']:
-            # TODO: this is only for cplex! Change it to more general form!
-            decoder_param['solver_options']['logPath'] = report_file_path(log_path, 'log', design_param)
-            c = GroupTestingDecoder(**decoder_param)
-            single_fit_start = time.time()
-            if decoder_param['lambda_selection']:
-                scoring = dict(Accuracy='accuracy',
-                               balanced_accuracy=make_scorer(balanced_accuracy_score))
-                print('cross validation')
-                grid = GridSearchCV(estimator=c, param_grid=decoder_param['cv_param'],
-                                    cv=decoder_param['number_of_folds'],
-                                    refit=decoder_param['eval_metric'], scoring=scoring, n_jobs=-1,
-                                    return_train_score=True, verbose=10)
-                grid.fit(A, b)
+    if decoder_param['decoding']:
+        try:
+            if decoder_param['decoder'] == 'generate':
+                # TODO: this is only for cplex! Change it to more general form!
+                decoder_param['solver_options']['logPath'] = report_file_path(log_path, 'log', design_param)
+                c = GroupTestingDecoder(**decoder_param)
+                single_fit_start = time.time()
+                if decoder_param['lambda_selection']:
+                    scoring = dict(Accuracy='accuracy',
+                                   balanced_accuracy=make_scorer(balanced_accuracy_score))
+                    print('cross validation')
+                    grid = GridSearchCV(estimator=c, param_grid=decoder_param['cv_param'],
+                                        cv=decoder_param['number_of_folds'],
+                                        refit=decoder_param['eval_metric'], scoring=scoring, n_jobs=-1,
+                                        return_train_score=True, verbose=10)
+                    grid.fit(A, b)
 
-                print('fit')
-                c = grid.best_estimator_
-                pd.DataFrame.from_dict(grid.cv_results_).to_csv(report_file_path(log_path,'cv_results',design_param))
-                pd.DataFrame(grid.best_params_, index=[0]).to_csv(report_file_path(log_path,'best_param',design_param))
-            else:
+                    print('fit')
+                    c = grid.best_estimator_
+                    pd.DataFrame.from_dict(grid.cv_results_).to_csv(report_file_path(log_path,'cv_results',design_param))
+                    pd.DataFrame(grid.best_params_, index=[0]).to_csv(report_file_path(log_path,'best_param', design_param))
+                else:
+                    c.fit(A, b)
+                single_fit_end = time.time()
+                print('SUM', np.sum(A, axis=0))
+                print('Score:', c.score(A, b))
+            elif decoder_param['decoder'] == 'alternative_module':
+                # TODO: add CV for this case
+                single_fit_start = time.time()
+                decoder_alt_module = __import__(decoder_param['decoder_alternative_module'][0],
+                                                     globals(), locals(), [], 0)
+                decoder_alt_function = getattr(decoder_alt_module,
+                                                    decoder_param['decoder_alternative_module'][1])
+                c = decoder_alt_function(**decoder_param)
                 c.fit(A, b)
-            single_fit_end = time.time()
-            print('SUM', np.sum(A, axis=0))
-            print('Score:', c.score(A, b))
+                single_fit_end = time.time()
             if design_param['save_to_file']:
                 solution_path = inner_path_generator(result_path, 'Solutions')
                 pd.DataFrame(c.solution()).to_csv(report_file_path(solution_path, 'solution', design_param),
                                                   header=None, index=None)
-            # evaluate the accuracy of the solution
-        if decoder_param['evaluation']:
-            try:
-                if decoder_param['decoder']:
-                    ev_result = decoder_evaluation(u, c.solution())
+                # evaluate the accuracy of the solution
+            if decoder_param['evaluation']:
+                try:
+                    ev_result = decoder_evaluation(u, c.solution(), decoder_param['eval_metric'])
                     ev_result['solver_time'] = round(single_fit_end - single_fit_start, 2)
                     # TODO: this is only for cplex status! Change it to more general form!
                     ev_result['Status'] = c.prob_.cplex_status
-                else:
-                    # TODO: read from file
-                    pass
-                # TODO: what if we only use decoder then we wouldn't have design_param
-                print('Evaluation is DONE!')
-            except Exception as e:
-                print(e)
-                ev_result = {'tn': None, 'fp': None, 'fn': None, 'tp': None}
-            single_run_end = time.time()
-            ev_result['time'] = round(single_run_end - single_run_start, 2)
-            ev_result.update({key: design_param[key] for key in ['N', 'm', 's', 'group_size', 'seed',
-                                                                 'max_tests_per_individual']})
-        return ev_result
-    except Exception as e:
-        print(e)
+                    print('Evaluation is DONE!')
+                except Exception as e:
+                    print(e)
+                    ev_result = {'tn': None, 'fp': None, 'fn': None, 'tp': None}
+                single_run_end = time.time()
+                ev_result['time'] = round(single_run_end - single_run_start, 2)
+                ev_result.update({key: design_param[key] for key in ['N', 'm', 's', 'group_size', 'seed',
+                                                                     'max_tests_per_individual']})
+            return ev_result
+        except Exception as e:
+            print(e)
 
-    # ev_result['delta'] = opts['delta']
-    # ev_result['rho'] = opts['rho']
 
 
 # main method for testing
@@ -155,9 +159,8 @@ if __name__ == '__main__':
             pool.join()
     else:
         results = [multi_process_group_testing(i[0], i[1]) for i in itertools.product(design_param, decoder_param)]
-
-    column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
-                    'balanced_accuracy', 'Status', 'solver_time', 'time']
+    column_names = [i for i in ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
+                    decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']]
     # Saving files
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
     print("---------------------->", results)
@@ -165,6 +168,3 @@ if __name__ == '__main__':
 
     end_time = time.time()
     print(end_time - start_time)
-    # final report generation, cleanup, etc.
-
-    # final output and end

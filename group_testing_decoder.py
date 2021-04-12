@@ -9,11 +9,10 @@ from utils import *
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
-                 sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False,
+                 sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False, lp_rounding_threshold=0,
                  is_it_noiseless=True, solver_name=None, solver_options=None, **kwargs):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
-
         self.lambda_e = lambda_e
         self.lambda_p = lambda_p
         self.lambda_n = lambda_n
@@ -31,6 +30,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.sensitivity_threshold = sensitivity_threshold
         self.specificity_threshold = specificity_threshold
         self.lp_relaxation = lp_relaxation
+        self.lp_rounding_threshold = lp_rounding_threshold
         self.is_it_noiseless = is_it_noiseless
         self.solver_name = solver_name
         self.solver_options = solver_options
@@ -153,7 +153,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=natural_keys))}
             w_solution = [v for k, v in sorted(w_solution.items(), key=lambda pair: index_map[pair[0]])]
             if self.lp_relaxation:
-                w_solution = [1 if i > 0 else 0 for i in w_solution]
+                w_solution = [1 if i > self.lp_rounding_threshold else 0 for i in w_solution]
         except AttributeError:
             raise RuntimeError("You must fit the data first!")
         return w_solution

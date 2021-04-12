@@ -10,3 +10,4 @@ Results
 gurobi.log
 log.txt
 PaperPlotTable.py
+generate_groups_alt.py

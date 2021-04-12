@@ -9,6 +9,7 @@ import os
 import datetime
 import yaml
 import sys
+from shutil import copyfile
 import warnings
 
 
@@ -30,19 +31,15 @@ def config_decoder(config_inpt):
     TODO: I used the following stackoverflow post for the return part:
     https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
     '''
-    # TODO: check the yml file format -> exception handeling
     for keys, vals in config_inpt.items():
         if isinstance(vals, dict):
-            #print(vals)
+            # print(vals)
             if 'mode' in config_inpt[keys].keys():
                 if config_inpt[keys]['mode'] == 'range':
                     config_inpt[keys] = np.arange(*config_inpt[keys]['values'])
                 elif config_inpt[keys]['mode'] == 'list':
                     config_inpt[keys] = config_inpt[keys]['values']
-            # TODO: remove mode = exact there is no need for it!
-            #elif config_inpt[keys]['mode'] == 'dict':
             else:
-                #config_inpt[keys].pop('mode')
                 config_inpt[keys] = [config_inpt[keys]]
         else:
             config_inpt[keys] = [vals]
@@ -52,9 +49,13 @@ def config_decoder(config_inpt):
 def config_input_or_params(current_dict, block_name, generate_label):
     if 'input' in current_dict.keys():
         current_setting = {'{}_input'.format(block_name): current_dict['input']}
+        current_setting[generate_label] = 'input'
     else:
         current_setting = current_dict['params']
-        current_setting[generate_label] = True
+        current_setting[generate_label] = 'generate'
+        if 'alternative_module' in current_dict.keys():
+            current_setting[generate_label] = 'alternative_module'
+            current_setting['{}_alternative_module'.format(block_name)] = current_dict['alternative_module']
     return current_setting
 
 
@@ -64,7 +65,7 @@ def config_reader(config_file_name):
         with open(config_file_name, 'r') as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
     except:
-        # TODO: this should be OSError
+
         e = sys.exc_info()[0]
         print("config file can not be found!")
         print("Error:", e)
@@ -73,14 +74,6 @@ def config_reader(config_file_name):
     decoder_param = {'decoder': False, 'lambda_selection': False, 'evaluation': False}
     # Load params
     if 'design' in config_dict.keys():
-        # try:
-        #     # assert 'general' in config_dict['design_param'].keys(), "You should define general properties of design!"
-        #     general_param = config_dict['design_param']['general']
-        #     design_param['general'] = True
-        #     design_param.update(general_param)
-        # except KeyError:
-        #     print("Warning: 'general' block is not found in the config file! We try to recover essential information "
-        #           "from the input files!")
         assert 'groups' in config_dict['design'].keys(), \
             "You should define the 'groups' block in the config file!"
         generate_groups = config_input_or_params(config_dict['design']['groups'], 'groups', 'generate_groups')
@@ -94,7 +87,6 @@ def config_reader(config_file_name):
         except KeyError:
             print("Warning: 'individual_status' block is not found in the config file! Individual status is necessary"
                   "if the results need to be evaluated!")
-        # if 'test_results' in config_dict['design_param'].keys():
         try:
             generate_test_results = config_input_or_params(config_dict['design']['test_results'], 'test_results',
                                                            'generate_test_results')
@@ -115,15 +107,6 @@ def config_reader(config_file_name):
                 print("decoder format in the config file is not correct!")
                 e = sys.exc_info()[0]
                 print("Error:", e)
-        # if 'lambda_selection' in config_dict['decoder_param'].keys():
-        #     try:
-        #         lambda_selection_param = config_dict['decoder_param']['lambda_selection']
-        #         decoder_param['lambda_selection'] = True
-        #         decoder_param.update(lambda_selection_param)
-        #     except:
-        #         e = sys.exc_info()[0]
-        #         print("config file format is not correct!")
-        #         print("Error2:", e)
         if 'evaluation' in config_dict['decode'].keys():
             try:
                 evaluation_param = config_dict['decode']['evaluation']
@@ -151,6 +134,42 @@ def path_generator(file_path, file_name, file_format):
         else:
             print("Successfully created the directory %s" % path + local_path[1:])
     return path + local_path[1:] + "/{}.{}".format(file_name, file_format)
+
+
+def report_file_path(report_path, report_label, params):
+    report_path = report_path + '/{}_{}_{}_{}_{}_{}.txt'.format(report_label, params['N'], params['group_size'],
+                                                                params['m'], params['s'], params['seed'])
+    return report_path
+
+
+def result_path_generator():
+    current_path = os.getcwd()
+    currentDate = datetime.datetime.now()
+    dir_name = currentDate.strftime("%b_%d_%Y_%H_%M_%S")
+    result_path = os.path.join(os.getcwd(), "Results/{}".format(dir_name))
+    # log_path = os.path.join(result_path, "Logs")
+    if not os.path.isdir(result_path):
+        try:
+            os.makedirs(result_path)
+        except OSError:
+            print("Creation of the directory %s failed" % result_path)
+        else:
+            print("Successfully created the directory %s " % result_path)
+    # Copy config file
+    copyfile('config.yml', os.path.join(result_path, 'config.yml'))
+    return current_path, result_path
+
+
+def inner_path_generator(current_path, inner_dir):
+    inner_path = os.path.join(current_path, inner_dir)
+    if not os.path.isdir(inner_path):
+        try:
+            os.makedirs(inner_path)
+        except OSError:
+            print("Creation of the directory %s failed" % inner_path)
+        else:
+            print("Successfully created the directory %s " % inner_path)
+    return inner_path
 
 
 if __name__ == '__main__':

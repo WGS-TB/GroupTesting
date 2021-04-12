@@ -40,9 +40,11 @@ Function to generate and return the matrix
 """
 
 
-def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_per_individual=4, verbose=False,
+def gen_measurement_matrix_alt(opts, seed=0, N=1000, m=100, group_size=4, max_tests_per_individual=4, verbose=False,
                            graph_gen_method='no_multiple', plotting=False, saving=True, run_ID='debugging'):
     # set the seed used for graph generation to the options seed
+    print('------------------------------\n\n\n\nTHIS IS AN ALTERNATIVE MODULE FOR GROUPS GENERATION'
+          '\n\n\n\n------------------------------')
     random.seed(opts['seed'])
     np.random.seed(opts['seed'])
 

@@ -2,12 +2,11 @@
 design:
   groups:
     #input: 'design_matrix.csv'
+    #alternative_module: ['generate_groups_alt','gen_measurement_matrix_alt']
     params:
       seed: 10
       N: 1000
-      'm':
-        'mode': 'range'
-        'values': [10,30,10]
+      'm': 500
       'verbose': False
       'run_ID': 'debugging'
       'plotting': False
@@ -19,14 +18,17 @@ design:
       'max_tests_per_individual':
         'mode': 'list'
         'values': [16]
+      'save_to_file': True
   'individual_status':
-    input: 'individual_status.csv'
+    #input: 'individual_status.csv'
     params:
+      seed: 10
+      'verbose': False
       's':
         'mode': 'list'
         'values': [50]
   'test_results':
-    'input': 'test_results.csv'
+    #'input': 'test_results.csv'
     'params':
       'test_noise_methods': ['permutation']
       'permutation_noise_prob':
@@ -45,7 +47,7 @@ design:
 decode:
   'decoder':
     'lambda_w': 1
-    'lambda_e': 0.25
+    'lambda_e': 4
     'defective_num_lower_bound': null
     'sensitivity_threshold': null
     'specificity_threshold': null
@@ -54,7 +56,7 @@ decode:
     'solver_name': 'CPLEX_PY'
     'solver_options':
       'timeLimit': 1800
-    'lambda_selection': True
+    'lambda_selection': False
     'number_of_folds': 2
     'cv_param':
       'lambda_e': [0.125,0.25,0.5,1,2,4,8]

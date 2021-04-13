@@ -98,11 +98,11 @@ def config_reader(config_file_name):
     if 'decode' in config_dict.keys():
         assert design_param['test_results'], "It is not possible to decode without test results! Please define the " \
                                              "'test_results' block in the config file."
-        decoder_param['decoding'] =True
+        decoder_param['decoding'] = True
         if 'decoder' in config_dict['decode'].keys():
             try:
-                decode_param = config_input_or_params(config_dict['decode']['decoder'], 'decoder','decoder')
-                #decoder_param['decoder'] = True
+                decode_param = config_input_or_params(config_dict['decode']['decoder'], 'decoder', 'decoder')
+                # decoder_param['decoder'] = True
                 decoder_param.update(decode_param)
             except:
                 print("decoder format in the config file is not correct!")
@@ -138,7 +138,7 @@ def path_generator(file_path, file_name, file_format):
 
 
 def report_file_path(report_path, report_label, params):
-    report_path = report_path + '/{}_{}_{}_{}_{}_{}.txt'.format(report_label, params['N'], params['group_size'],
+    report_path = report_path + '/{}_N{}_g{}_m{}_s{}_seed{}.txt'.format(report_label, params['N'], params['group_size'],
                                                                 params['m'], params['s'], params['seed'])
     return report_path
 
@@ -147,8 +147,7 @@ def result_path_generator():
     current_path = os.getcwd()
     currentDate = datetime.datetime.now()
     dir_name = currentDate.strftime("%b_%d_%Y_%H_%M_%S")
-    result_path = os.path.join(os.getcwd(), "Results/{}".format(dir_name))
-    # log_path = os.path.join(result_path, "Logs")
+    result_path = os.path.join(current_path, "Results/{}".format(dir_name))
     if not os.path.isdir(result_path):
         try:
             os.makedirs(result_path)

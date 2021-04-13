@@ -48,13 +48,17 @@ decode:
   'decoder':
     #alternative_module: ['group_testing_decoder','GroupTestingDecoder']
     params:
+      'lambda_w': 1
       'lambda_e': 4
+      'defective_num_lower_bound': null
+      'sensitivity_threshold': null
+      'specificity_threshold': null
       'is_it_noiseless': False
       'lp_relaxation': False
       'solver_name': 'CPLEX_PY'
       'solver_options':
         'timeLimit': 1800
-      'lambda_selection': False
+      'lambda_selection': True
       'number_of_folds': 3
       'cv_param':
         'lambda_e': [0.125,0.25,0.5,1,2,4,8]

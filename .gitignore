@@ -6,7 +6,6 @@ test.py
 .idea
 *.m~
 temp_for_test.py
-Results
 gurobi.log
 log.txt
 PaperPlotTable.py

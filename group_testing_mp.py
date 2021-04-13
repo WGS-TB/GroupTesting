@@ -38,6 +38,7 @@ def multi_process_group_testing(design_param, decoder_param):
                                                    design_param['groups_alternative_module'][1])
             A = generate_groups_alt_function(opts=design_param)
         elif design_param['generate_groups'] == 'input':
+            # TODO: Check if the matrix is binary
             A = np.genfromtxt(design_param['groups_input'], delimiter=',')
             design_param['m'], design_param['N'] = A.shape
             design_param['group_size'] = int(max(A.sum(axis=1)))
@@ -47,6 +48,7 @@ def multi_process_group_testing(design_param, decoder_param):
             A = gen_measurement_matrix(opts=design_param)
         # generate the infected status of the individuals
         if design_param['generate_individual_status'] == 'input':
+            # TODO: Check if the file has the right size!
             u = np.genfromtxt(design_param['individual_status_input'], delimiter=',')
             design_param['s'] = np.count_nonzero(u)
         elif design_param['generate_individual_status'] == 'alternative_module':
@@ -59,6 +61,7 @@ def multi_process_group_testing(design_param, decoder_param):
             u = gen_status_vector(design_param)
             u = [i[0] for i in u]
         # generate the data corresponding to the group tests
+        # TODO: Check if the file has the right size!
         if design_param['generate_test_results'] == 'input':
             b = np.genfromtxt(design_param['test_results_input'], delimiter=',')
         elif design_param['generate_test_results'] == 'alternative_module':
@@ -100,15 +103,14 @@ def multi_process_group_testing(design_param, decoder_param):
                                         return_train_score=True, verbose=10)
                     grid.fit(A, b)
 
-                    print('fit')
                     c = grid.best_estimator_
                     pd.DataFrame.from_dict(grid.cv_results_).to_csv(report_file_path(log_path,'cv_results',design_param))
                     pd.DataFrame(grid.best_params_, index=[0]).to_csv(report_file_path(log_path,'best_param', design_param))
                 else:
                     c.fit(A, b)
                 single_fit_end = time.time()
-                print('SUM', np.sum(A, axis=0))
-                print('Score:', c.score(A, b))
+                # print('SUM', np.sum(A, axis=0))
+                # print('Score:', c.score(A, b))
             elif decoder_param['decoder'] == 'alternative_module':
                 # TODO: add CV for this case
                 single_fit_start = time.time()
@@ -163,7 +165,7 @@ if __name__ == '__main__':
                     decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']]
     # Saving files
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
-    print("---------------------->", results)
+    # print("---------------------->", results)
     pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'CM.csv'))
 
     end_time = time.time()

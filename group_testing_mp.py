@@ -38,8 +38,9 @@ def multi_process_group_testing(design_param, decoder_param):
                                                    design_param['groups_alternative_module'][1])
             A = generate_groups_alt_function(opts=design_param)
         elif design_param['generate_groups'] == 'input':
-            # TODO: Check if the matrix is binary
             A = np.genfromtxt(design_param['groups_input'], delimiter=',')
+            # TODO: Check if m and N is defined too
+            assert np.array_equal(A, A.astype(bool)), "The input design matrix A is not binary!"
             design_param['m'], design_param['N'] = A.shape
             design_param['group_size'] = int(max(A.sum(axis=1)))
             design_param['max_tests_per_individual'] = int(max(A.sum(axis=0)))
@@ -48,8 +49,9 @@ def multi_process_group_testing(design_param, decoder_param):
             A = gen_measurement_matrix(opts=design_param)
         # generate the infected status of the individuals
         if design_param['generate_individual_status'] == 'input':
-            # TODO: Check if the file has the right size!
             u = np.genfromtxt(design_param['individual_status_input'], delimiter=',')
+            assert u.size == design_param['N'], "Individual status input file does not have the correct size!"
+            assert np.array_equal(u, u.astype(bool)), "Individual status input file is not binary!"
             design_param['s'] = np.count_nonzero(u)
         elif design_param['generate_individual_status'] == 'alternative_module':
             individual_status_alt_module = __import__(design_param['individual_status_alternative_module'][0],
@@ -61,9 +63,10 @@ def multi_process_group_testing(design_param, decoder_param):
             u = gen_status_vector(design_param)
             u = [i[0] for i in u]
         # generate the data corresponding to the group tests
-        # TODO: Check if the file has the right size!
         if design_param['generate_test_results'] == 'input':
             b = np.genfromtxt(design_param['test_results_input'], delimiter=',')
+            assert b.size == design_param['m'], "Test results input file does not have the correct size!"
+            assert np.array_equal(b, b.astype(bool)), "test results input file is not binary!"
         elif design_param['generate_test_results'] == 'alternative_module':
             test_results_alt_module = __import__(design_param['test_results_alternative_module'][0],
                                                       globals(), locals(), [], 0)
@@ -72,7 +75,7 @@ def multi_process_group_testing(design_param, decoder_param):
             b = test_results_alt_function(opts=design_param)
         else:
             b = gen_test_vector(A, u, design_param)
-        if design_param['save_to_file']:
+        if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
             design_path = inner_path_generator(result_path, 'Design')
             design_matrix_path = inner_path_generator(design_path, 'Design_Matrix')
             pd.DataFrame(A).to_csv(report_file_path(design_matrix_path, 'design_matrix', design_param),
@@ -84,8 +87,10 @@ def multi_process_group_testing(design_param, decoder_param):
             pd.DataFrame(b).to_csv(report_file_path(test_results_path, 'test_results', design_param),
                                    header=None, index=None)
 
-    except Exception as e:
-        print(e)
+    except Exception as design_error:
+        print(design_error)
+        decoder_param['decoding']=False
+
     if decoder_param['decoding']:
         try:
             if decoder_param['decoder'] == 'generate':
@@ -121,7 +126,7 @@ def multi_process_group_testing(design_param, decoder_param):
                 c = decoder_alt_function(**decoder_param)
                 c.fit(A, b)
                 single_fit_end = time.time()
-            if design_param['save_to_file']:
+            if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
                 solution_path = inner_path_generator(result_path, 'Solutions')
                 pd.DataFrame(c.solution()).to_csv(report_file_path(solution_path, 'solution', design_param),
                                                   header=None, index=None)
@@ -143,6 +148,8 @@ def multi_process_group_testing(design_param, decoder_param):
             return ev_result
         except Exception as e:
             print(e)
+    else:
+        print("Decoding was not performed!")
 
 
 
@@ -165,8 +172,9 @@ if __name__ == '__main__':
                     decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']]
     # Saving files
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
-    # print("---------------------->", results)
-    pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'CM.csv'))
+    #print("---------------------->", results)
+    if all(v is not None for v in results):
+        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'CM.csv'))
 
     end_time = time.time()
     print(end_time - start_time)

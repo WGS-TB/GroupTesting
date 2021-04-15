@@ -69,8 +69,7 @@ def config_reader(config_file_name):
         e = sys.exc_info()[0]
         print("config file can not be found!")
         print("Error:", e)
-    design_param = {'generate_groups': False, 'generate_individual_status': False,
-                    'generate_test_results': False, 'test_results': False}
+    design_param = {'generate_groups': False}
     decoder_param = {'decoding': False, 'decoder': False, 'lambda_selection': False, 'evaluation': False}
     # Load params
     if 'design' in config_dict.keys():
@@ -83,18 +82,33 @@ def config_reader(config_file_name):
                 current_dict=config_dict['design']['individual_status'],
                 block_name='individual_status',
                 generate_label='generate_individual_status')
+            generate_individual_status_keys = list(generate_individual_status.keys())
+            for k in generate_individual_status_keys:
+                if k in design_param.keys():
+                    print('{} has been set before in the "group" block! The framework would continue with the initial'
+                          ' value!'.format(k))
+                    generate_individual_status.pop(k)
             design_param.update(generate_individual_status)
         except KeyError:
             print("Warning: 'individual_status' block is not found in the config file! Individual status is necessary"
                   "if the results need to be evaluated!")
+            design_param['generate_individual_status'] = False
         try:
             generate_test_results = config_input_or_params(config_dict['design']['test_results'], 'test_results',
                                                            'generate_test_results')
+            generate_test_results_keys = list(generate_test_results.keys())
+            for k in generate_test_results_keys:
+                if k in design_param.keys():
+                    print('{} has been set before in the "group" or "individual_status" block! The framework '
+                          'would continue with the initial value!'.format(k))
+                    generate_test_results.pop(k)
             design_param.update(generate_test_results)
             design_param['test_results'] = True
         except KeyError:
             print("Warning: 'test_results' block is not found in the config file! Test results is necessary for"
                   " decoding!")
+            design_param['generate_test_results'] = False
+            design_param['test_results'] = False
     if 'decode' in config_dict.keys():
         assert design_param['test_results'], "It is not possible to decode without test results! Please define the " \
                                              "'test_results' block in the config file."

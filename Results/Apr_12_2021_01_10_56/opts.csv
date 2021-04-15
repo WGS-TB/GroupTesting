@@ -1,3 +1,0 @@
-,generate_groups,generate_individual_status,generate_test_results,test_results,seed,N,m,verbose,run_ID,plotting,saving,graph_gen_method,group_size,max_tests_per_individual,save_to_file,s,test_noise_methods,permutation_noise_prob,theta_l,theta_u,binary_symmetric_noise_prob,data_filename
-0,generate,generate,generate,True,10,1000,500,False,debugging,False,True,no_multiple,8,16,True,50,['permutation'],0.01,0.0,0.0625,0.26,debugging_generate_groups_output.mat
-1,generate,generate,generate,True,10,1000,500,False,debugging,False,True,no_multiple,16,16,True,50,['permutation'],0.01,0.0,0.0625,0.26,debugging_generate_groups_output.mat

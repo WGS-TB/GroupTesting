@@ -1,3 +1,0 @@
-,N,m,s,group_size,seed,max_tests_per_individual,tn,fp,fn,tp,balanced_accuracy,Status,solver_time,time
-0,1000,500,50,8,10,16,950,0,2,48,0.98,101,8.84,9.22
-1,1000,500,50,16,10,16,950,0,1,49,0.99,101,10.11,10.47

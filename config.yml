@@ -20,16 +20,17 @@ design:
         'values': [16]
       'save_to_file': True
   'individual_status':
-    #input: 'individual_status.csv'
+    input: 'individual_status.csv'
     params:
-      seed: 10
       'verbose': False
       's':
         'mode': 'list'
         'values': [50]
   'test_results':
-    #'input': 'test_results.csv'
+    'input': 'test_results.csv'
     'params':
+      seed: 20
+      'verbose': False
       'test_noise_methods': ['permutation']
       'permutation_noise_prob':
         'mode': 'list'

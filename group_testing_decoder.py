@@ -115,7 +115,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
         solver = pl.get_solver(self.solver_name, **self.solver_options)
         p.solve(solver)
-        # TODO: Check this
         if not self.lp_relaxation:
             p.roundSolution()
         # ----------------

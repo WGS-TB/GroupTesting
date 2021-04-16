@@ -5,7 +5,7 @@ import copy
 import yaml
 from utils import config_decoder
 
-path = '/Users/hoomanzabeti/Desktop/GTResults/Noisy/Threshold/threshold_32'
+path = '/Users/hoomanzabeti/Desktop/GTResults/Noisy/Permutation_updated'
 alist = [i for i in os.walk(path)]
 #dir_list = [i for i in alist[0][1] if i.startswith('Jan_')]
 dir_list = [i for i in alist[0][1]]

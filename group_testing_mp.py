@@ -30,7 +30,6 @@ def multi_process_group_testing(design_param, decoder_param):
     try:
         single_run_start = time.time()
         # generate the measurement matrix from the given options
-
         if design_param['generate_groups'] == 'alternative_module':
             generate_groups_alt_module = __import__(design_param['groups_alternative_module'][0], globals(), locals(),
                                                     [], 0)
@@ -44,8 +43,7 @@ def multi_process_group_testing(design_param, decoder_param):
             design_param['m'], design_param['N'] = A.shape
             design_param['group_size'] = int(max(A.sum(axis=1)))
             design_param['max_tests_per_individual'] = int(max(A.sum(axis=0)))
-        # elif design_param['generate_groups'] == 'generate':
-        else:
+        elif design_param['generate_groups'] == 'generate':
             A = gen_measurement_matrix(opts=design_param)
         # generate the infected status of the individuals
         if design_param['generate_individual_status'] == 'input':
@@ -59,7 +57,7 @@ def multi_process_group_testing(design_param, decoder_param):
             individual_status_alt_function = getattr(individual_status_alt_module,
                                                      design_param['individual_status_alternative_module'][1])
             u = individual_status_alt_function(opts=design_param)
-        else:
+        elif design_param['generate_individual_status'] == 'generate':
             u = gen_status_vector(design_param)
             u = [i[0] for i in u]
         # generate the data corresponding to the group tests
@@ -73,20 +71,21 @@ def multi_process_group_testing(design_param, decoder_param):
             test_results_alt_function = getattr(test_results_alt_module,
                                                      design_param['test_results_alternative_module'][1])
             b = test_results_alt_function(opts=design_param)
-        else:
+        elif design_param['generate_test_results'] == 'generate':
             b = gen_test_vector(A, u, design_param)
         if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
             design_path = inner_path_generator(result_path, 'Design')
             design_matrix_path = inner_path_generator(design_path, 'Design_Matrix')
             pd.DataFrame(A).to_csv(report_file_path(design_matrix_path, 'design_matrix', design_param),
                                    header=None, index=None)
-            individual_status_path = inner_path_generator(design_path,'Individual_Status')
-            pd.DataFrame(u).to_csv(report_file_path(individual_status_path, 'individual_status', design_param),
-                                   header=None, index=None)
-            test_results_path = inner_path_generator(design_path,'Test_Results')
-            pd.DataFrame(b).to_csv(report_file_path(test_results_path, 'test_results', design_param),
-                                   header=None, index=None)
-
+            if design_param['generate_individual_status']:
+                individual_status_path = inner_path_generator(design_path,'Individual_Status')
+                pd.DataFrame(u).to_csv(report_file_path(individual_status_path, 'individual_status', design_param),
+                                       header=None, index=None)
+            if design_param['generate_test_results']:
+                test_results_path = inner_path_generator(design_path,'Test_Results')
+                pd.DataFrame(b).to_csv(report_file_path(test_results_path, 'test_results', design_param),
+                                       header=None, index=None)
     except Exception as design_error:
         print(design_error)
         decoder_param['decoding']=False
@@ -145,7 +144,7 @@ def multi_process_group_testing(design_param, decoder_param):
                 ev_result['time'] = round(single_run_end - single_run_start, 2)
                 ev_result.update({key: design_param[key] for key in ['N', 'm', 's', 'group_size', 'seed',
                                                                      'max_tests_per_individual']})
-            return ev_result
+                return ev_result
         except Exception as e:
             print(e)
     else:
@@ -168,13 +167,14 @@ if __name__ == '__main__':
             pool.join()
     else:
         results = [multi_process_group_testing(i[0], i[1]) for i in itertools.product(design_param, decoder_param)]
-    column_names = [i for i in ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
-                    decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']]
+
     # Saving files
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
     #print("---------------------->", results)
     if all(v is not None for v in results):
-        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'CM.csv'))
+        column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
+                        decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']
+        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'ConfusionMatrix.csv'))
 
     end_time = time.time()
     print(end_time - start_time)

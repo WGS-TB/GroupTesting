@@ -13,6 +13,7 @@ def decoder_evaluation(w_true, sln, ev_metric='balanced_accuracy'):
 
 
 if __name__ == '__main__':
+    # TODO: update this part
     current_directory = os.getcwd()
     file_path = os.path.join(current_directory, r'problem.mps')
     u = [1, 0, 0, 1, 0, 1]

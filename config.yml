@@ -19,6 +19,7 @@ design:
         'mode': 'list'
         'values': [16]
       'save_to_file': True
+      s: 50
   'individual_status':
     #input: 'individual_status.csv'
     params:

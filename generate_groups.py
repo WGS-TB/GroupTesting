@@ -92,7 +92,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
     # out-degree corresponds to the group tests, here we set the last m 
     # entries of the out-degree sequence to specify the groups
     outdeg = np.zeros(N + m)
-    outdeg[N:N + m] = group_size
+    outdeg[N:(N + m)] = group_size
 
     # keep track of vertex types for final graph vertex coloring
     vtypes = np.zeros(N + m)

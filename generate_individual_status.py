@@ -18,40 +18,26 @@ import scipy.io as sio
 """
 Function to generate the infected status of individuals (a vector)
 """
-def gen_status_vector(opts):
+def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
 
     # set the seed used for status generation
-    random.seed(opts['seed'])
-    np.random.seed(opts['seed'])
+    random.seed(seed)
+    np.random.seed(seed)
 
     # generate a random vector having sparsity level s
-    indices = random.sample(range(opts['N']), opts['s'])
-    u = np.zeros((opts['N'],1))
+    indices = random.sample(range(N), s)
+    u = np.zeros((N, 1))
     for i in indices:
         u[i] = 1
 
     try:
-        assert np.sum(u) == opts['s']
+        assert np.sum(u) == s
     except AssertionError:
-        errstr = ("Assertion Failed: opts['s'] = " + str(opts['s']) \
+        errstr = ("Assertion Failed: opts['s'] = " + str(s) \
             + ", since sum(u) = " + str(np.sum(u))) 
         print(errstr)
         sys.exit()
 
-    # save data to a MATLAB ".mat" file
-    # if opts['saving']:
-    #     if path.exists(opts['data_filename']):
-    #         data = sio.loadmat(opts['data_filename'])
-    #     else:
-    #         data = {}
-    #
-    #     data['u'] = u
-    #     data['opts'] = opts
-    #     data['seed'] = opts['seed']
-    #     sio.savemat(opts['data_filename'], data)
-
-    # return the vector, where the nth component represents the infected 
-    # status of the nth individual
     return u
 
 if __name__ == '__main__':
@@ -61,13 +47,13 @@ if __name__ == '__main__':
     opts['N'] = 500
     opts['s'] = 20
     opts['verbose'] = True #False
-    opts['plotting'] = True #False
-    opts['saving'] = True
-    opts['run_ID'] = 'GT_status_vector_generation_component'
-    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
+    # opts['plotting'] = True #False
+    # opts['saving'] = True
+    # opts['run_ID'] = 'GT_status_vector_generation_component'
+    # opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
     opts['seed'] = 0
 
-    u = gen_status_vector(opts)
+    u = gen_status_vector(**opts)
 
     # print shape of matrix
     if opts['verbose']:

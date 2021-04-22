@@ -4,35 +4,32 @@ design:
     #input: 'design_matrix.csv'
     #alternative_module: ['generate_groups_alt','gen_measurement_matrix_alt']
     params:
-      seed: 10
+      seed:
+        mode: 'range'
+        values: [0,1,1]
       N: 1000
       'm': 500
       'verbose': False
-      'run_ID': 'debugging'
-      'plotting': False
-      'saving': True
       'graph_gen_method': 'no_multiple'
-      'group_size':
-        'mode': 'list'
-        'values': [8,16]
+      'group_size': 8
+#        mode: 'range'
+#        values: [8,18,2]
       'max_tests_per_individual':
         'mode': 'list'
         'values': [16]
       'save_to_file': True
-      s: 50
   'individual_status':
     #input: 'individual_status.csv'
     params:
-      'verbose': False
       's':
         'mode': 'list'
-        'values': [50]
+        'values': [100]
   'test_results':
     #'input': 'test_results.csv'
     'params':
       seed: 20
       'verbose': False
-      'test_noise_methods': ['permutation']
+      'test_noise_methods': []
       'permutation_noise_prob':
         'mode': 'list'
         'values': [0.01]
@@ -51,12 +48,12 @@ decode:
     #alternative_module: ['group_testing_decoder','GroupTestingDecoder']
     params:
       'lambda_e': 4
-      'is_it_noiseless': False
+      'is_it_noiseless': True
       'lp_relaxation': False
       'solver_name': 'CPLEX_PY'
       'solver_options':
         'timeLimit': 1800
-      'lambda_selection': True
+      'lambda_selection': False
       'number_of_folds': 3
       'cv_param':
         'lambda_e': [0.125,0.25,0.5,1,2,4,8]

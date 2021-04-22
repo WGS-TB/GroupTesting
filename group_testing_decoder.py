@@ -10,7 +10,7 @@ from utils import *
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
                  sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False, lp_rounding_threshold=0,
-                 is_it_noiseless=True, solver_name=None, solver_options=None, **kwargs):
+                 is_it_noiseless=True, solver_name=None, solver_options=None):
         # TODO: Check their values
         # TODO: Change lambda_w to sample weight
         self.lambda_e = lambda_e

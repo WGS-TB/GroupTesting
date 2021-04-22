@@ -40,22 +40,15 @@ Function to generate and return the matrix
 """
 
 
-def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_per_individual=4, verbose=False,
+def gen_measurement_matrix(seed=0, N=1000, m=100, group_size=4, max_tests_per_individual=4, verbose=False,
                            graph_gen_method='no_multiple', plotting=False, saving=True, run_ID='debugging'):
     # set the seed used for graph generation to the options seed
-    random.seed(opts['seed'])
-    np.random.seed(opts['seed'])
-
-    # (slightly) shorter references for options
-    m = opts['m']
-    N = opts['N']
-    group_size = opts['group_size']
-    max_tests_per_individual = opts['max_tests_per_individual']
-
-    # compute tests per individual needed to satisfy 
+    random.seed(seed)
+    np.random.seed(seed)
+    # compute tests per individual needed to satisfy
     #           N*tests_per_individual == m*group_size
     avg_test_split = math.floor(m * group_size / N)
-    if opts['verbose']:
+    if verbose:
         print('number of tests per individual needed to satisfy ' \
               + '(N*tests_per_individual == m*group_size) = ' + str(avg_test_split))
 
@@ -78,7 +71,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
     #   allowed number of tests, but this is not a problem (only the opposite is)
     tests_per_individual = max(min(max_tests_per_individual, avg_test_split), 1)
 
-    if opts['verbose']:
+    if verbose:
         print("tests_per_individual = " + str(tests_per_individual))
 
     # In this model, the first N elements of the degree sequence correspond
@@ -99,7 +92,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
     vtypes[0:N] = 1
 
     # output the sum of indeg and outdeg if checking conditions
-    if opts['verbose']:
+    if verbose:
         print("out degree sequence: {}".format(outdeg.tolist()))
         print("in degree sequence:  {}".format(indeg.tolist()))
         print("sum outdeg (groups) = {}".format(np.sum(outdeg)))
@@ -134,7 +127,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
                 indeg[min_indices[0, index]] = indeg[min_indices[0, index]] + 1
 
             # output stats after fixing
-            if opts['verbose']:
+            if verbose:
                 print("after fixing")
                 print("out degree sequence: {}".format(outdeg.tolist()))
                 print("in degree sequence:  {}".format(indeg.tolist()))
@@ -155,7 +148,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
     # generate the graph
     try:
         assert igraph._igraph.is_graphical_degree_sequence(outdeg.tolist(), indeg.tolist())
-        g = igraph.Graph.Degree_Sequence(outdeg.tolist(), indeg.tolist(), opts['graph_gen_method'])
+        g = igraph.Graph.Degree_Sequence(outdeg.tolist(), indeg.tolist(), graph_gen_method)
         g.vs['vertex_type'] = vtypes
         assert np.sum(outdeg) == len(g.get_edgelist())
     except AssertionError:
@@ -172,7 +165,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
     else:
         # get the adjacency matrix corresponding to the nodes of the graph
         A = np.array(g.get_adjacency()._get_data())
-        if opts['verbose']:
+        if verbose:
             # print(g)
             # print(A)
             # print("before resizing")
@@ -193,7 +186,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
         col_sum = np.sum(A, axis=0)
 
         # display properties of A and graph g
-        if opts['verbose']:
+        if verbose:
             # print(A)
             # print("after resizing")
             # print(A.shape)
@@ -206,7 +199,7 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
             print("g is bipartite: {}".format(check_bipartite))
 
         # set options and plot corresponding graph
-        if opts['plotting']:
+        if plotting:
             layout = g.layout("auto")
             color_dict = {1: "blue", 0: "red"}
             g.vs['color'] = [color_dict[vertex_type] for vertex_type in g.vs['vertex_type']]
@@ -221,19 +214,19 @@ def gen_measurement_matrix(opts, seed=0, N=1000, m=100, group_size=4, max_tests_
             igraph.drawing.plot(g, **visual_style)
 
         # save data to a MATLAB ".mat" file
-        opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-        if opts['saving']:
-            data = {}
-            # data['A'] = A
-            data['bipartite'] = check_bipartite
-            data['indeg'] = indeg
-            data['outdeg'] = outdeg
-            data['min_col_sum'] = min(col_sum)
-            data['min_row_sum'] = min(row_sum)
-            data['max_col_sum'] = max(col_sum)
-            data['max_row_sum'] = max(row_sum)
-            data['opts'] = opts
-            sio.savemat(opts['data_filename'], data)
+        data_filename = run_ID + '_generate_groups_output.mat'
+        # if saving:
+        #     data = {}
+        #     # data['A'] = A
+        #     data['bipartite'] = check_bipartite
+        #     data['indeg'] = indeg
+        #     data['outdeg'] = outdeg
+        #     data['min_col_sum'] = min(col_sum)
+        #     data['min_row_sum'] = min(row_sum)
+        #     data['max_col_sum'] = max(col_sum)
+        #     data['max_row_sum'] = max(row_sum)
+        #     data['opts'] = opts
+        #     sio.savemat(opts['data_filename'], data)
 
     # return the adjacency matrix of the graph
     return A
@@ -253,14 +246,14 @@ if __name__ == '__main__':
     opts['max_tests_per_individual'] = 15
     opts['graph_gen_method'] = 'no_multiple'  # options are "no_multiple" or "simple"
     opts['verbose'] = True  # False
-    opts['plotting'] = True  # False
+    opts['plotting'] = False  # False
     opts['saving'] = True
     opts['run_ID'] = 'GT_matrix_generation_component'
-    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
+    #opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
     opts['seed'] = 0
 
     # generate the measurement matrix with igraph
-    A = gen_measurement_matrix(opts)
+    A = gen_measurement_matrix(**opts)
 
     # print shape of matrix
     if opts['verbose']:

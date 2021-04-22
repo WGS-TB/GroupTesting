@@ -10,6 +10,8 @@ import datetime
 import yaml
 import sys
 from shutil import copyfile
+import inspect
+import math
 import warnings
 
 
@@ -91,7 +93,7 @@ def config_reader(config_file_name):
             design_param.update(generate_individual_status)
         except KeyError:
             print("Warning: 'individual_status' block is not found in the config file! Individual status is necessary"
-                  "if the results need to be evaluated!")
+                  " if the results need to be evaluated!")
             design_param['generate_individual_status'] = False
         try:
             generate_test_results = config_input_or_params(config_dict['design']['test_results'], 'test_results',
@@ -135,10 +137,11 @@ def config_reader(config_file_name):
     return config_decoder(design_param), config_decoder(decoder_param)
 
 
-def path_generator(file_path, file_name, file_format):
+def path_generator(file_path, file_name, file_format, dir_name=None):
     currentDate = datetime.datetime.now()
     # TODO: change dir_name to unique code if you want to run multiple configs
-    dir_name = currentDate.strftime("%b_%d_%Y_%H_%M")
+    if dir_name is None:
+        dir_name = currentDate.strftime("%b_%d_%Y_%H_%M")
     local_path = "./Results/{}".format(dir_name)
     path = os.getcwd()
     if not os.path.isdir(local_path):
@@ -151,16 +154,18 @@ def path_generator(file_path, file_name, file_format):
     return path + local_path[1:] + "/{}.{}".format(file_name, file_format)
 
 
-def report_file_path(report_path, report_label, params):
-    report_path = report_path + '/{}_N{}_g{}_m{}_s{}_seed{}.txt'.format(report_label, params['N'], params['group_size'],
-                                                                params['m'], params['s'], params['seed'])
+def report_file_path(report_path, report_label,report_extension, params):
+    report_path = report_path + '/{}_N{}_g{}_m{}_s{}_seed{}.{}'.format(report_label, params['N'], params['group_size'],
+                                                                        params['m'], params['s'], params['seed'],
+                                                                       report_extension)
     return report_path
 
 
-def result_path_generator():
+def result_path_generator(dir_name=None):
     current_path = os.getcwd()
     currentDate = datetime.datetime.now()
-    dir_name = currentDate.strftime("%b_%d_%Y_%H_%M_%S")
+    if dir_name is None:
+        dir_name = currentDate.strftime("%b_%d_%Y_%H_%M_%S")
     result_path = os.path.join(current_path, "Results/{}".format(dir_name))
     if not os.path.isdir(result_path):
         try:
@@ -185,6 +190,18 @@ def inner_path_generator(current_path, inner_dir):
             print("Successfully created the directory %s " % inner_path)
     return inner_path
 
+
+def param_distributor(param_dictionary, function_name):
+    passing_param = {k: param_dictionary[k] for k in inspect.signature(function_name).parameters if k in param_dictionary}
+    remaining_param = {k: inspect.signature(function_name).parameters[k].default if
+                       inspect.signature(function_name).parameters[k].default!= inspect._empty else None for k in
+                       inspect.signature(function_name).parameters if k not in passing_param}
+    return passing_param, remaining_param
+def auto_group_size(N,s):
+    group_size = round(math.log(0.5)/math.log(1-(int(s)/int(N))))
+    if group_size > 32:
+        group_size=32
+    return group_size
 
 if __name__ == '__main__':
     design_param, decoder_param = config_reader('config.yml')

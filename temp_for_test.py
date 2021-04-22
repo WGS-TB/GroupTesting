@@ -5,7 +5,7 @@ import copy
 import yaml
 from utils import config_decoder
 
-path = '/Users/hoomanzabeti/Desktop/GTResults/Noisy/Permutation_updated'
+path = '/Users/hoomanzabeti/Desktop/GTResults/Noisy/Noise_without_CV'
 alist = [i for i in os.walk(path)]
 #dir_list = [i for i in alist[0][1] if i.startswith('Jan_')]
 dir_list = [i for i in alist[0][1]]
@@ -17,13 +17,15 @@ for i in range(len(dir_list)):
     with open(dir_list[i][1], 'r') as config_file:
         config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
     opts = config_decoder(config_dict['opts'])[0]
+    params = config_decoder(config_dict['param'])[0]
     temp_csv = pd.read_csv(dir_list[i][0])
     temp_csv['Noise'] = opts['test_noise_methods'][0]
     if opts['test_noise_methods'][0] == 'permutation':
         temp_csv['permutation_noise_prob'] = opts['permutation_noise_prob']
+        temp_csv['lambda_e'] = params ['lambda_e']
     combined_csv.append(copy.copy(temp_csv))
 combined_csv = pd.concat(combined_csv)
-combined_csv.to_csv( os.path.join(path,"Noise_{}_CM.csv".format(opts['test_noise_methods'][0])), index=False, encoding='utf-8-sig')
+combined_csv.to_csv( os.path.join(path,"Noise_{}_without_cv_CM.csv".format(opts['test_noise_methods'][0])), index=False, encoding='utf-8-sig')
 
 # log_list = [j for i in dir_list for j in os.walk(os.path.join(path,i,'Logs/'))]
 # #log_list = [i for j in log_list for i in j[2] if i.startswith('log')]

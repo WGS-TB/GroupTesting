@@ -197,6 +197,8 @@ def param_distributor(param_dictionary, function_name):
                        inspect.signature(function_name).parameters[k].default!= inspect._empty else None for k in
                        inspect.signature(function_name).parameters if k not in passing_param}
     return passing_param, remaining_param
+
+    
 def auto_group_size(N,s):
     group_size = round(math.log(0.5)/math.log(1-(int(s)/int(N))))
     if group_size > 32:

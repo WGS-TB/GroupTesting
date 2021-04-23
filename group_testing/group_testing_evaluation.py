@@ -1,5 +1,5 @@
-from sklearn.metrics import *
 import sklearn
+from sklearn.metrics import confusion_matrix
 import os
 
 

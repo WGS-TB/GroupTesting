@@ -1,11 +1,12 @@
 import pulp as pl
-from pulp import *
 import os
 import numpy as np
-from generate_test_results import gen_test_vector
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import balanced_accuracy_score
-from utils import *
+
+from generate_test_results import gen_test_vector
+import utils 
+
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
@@ -61,7 +62,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                   "testing matrix)")
         # -------------------------------------
         # Initializing the ILP problem
-        p = LpProblem('GroupTesting', LpMinimize)
+        p = pl.LpProblem('GroupTesting', pl.LpMinimize)
         # p.verbose(param['verbose'])
         # Variables kind
         if self.lp_relaxation:
@@ -69,21 +70,21 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         else:
             varCategory = 'Binary'
         # Variable w
-        w = LpVariable.dicts('w', range(n), lowBound=0, upBound=1, cat=varCategory)
+        w = pl.LpVariable.dicts('w', range(n), lowBound=0, upBound=1, cat=varCategory)
         # --------------------------------------
         # Noiseless setting
         if self.is_it_noiseless:
             # Defining the objective function
-            p += lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
+            p += pl.lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)])
             # Constraints
             for i in positive_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)]) >= 1
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)]) >= 1
             for i in negative_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)]) == 0
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)]) == 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
-                p += lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
+                p += pl.lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
 
         # --------------------------------------
         # Noisy setting
@@ -98,28 +99,28 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                 en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
                                       cat=self.en_cat)
             # Defining the objective function
-            p += lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
+            p += pl.lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)]) + \
-                 lpSum([self.lambda_p * ep[j] for j in positive_label]) + \
-                 lpSum([self.lambda_n * en[k] for k in negative_label])
+                 pl.lpSum([self.lambda_p * ep[j] for j in positive_label]) + \
+                 pl.lpSum([self.lambda_n * en[k] for k in negative_label])
             # Constraints
             for i in positive_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
             for i in negative_label:
                 if self.en_cat == 'Continuous':
-                    p += lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
+                    p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
                 else:
-                    p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
+                    p += pl.lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
-                p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
+                p += pl.lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
         solver = pl.get_solver(self.solver_name, **self.solver_options)
         p.solve(solver)
         if not self.lp_relaxation:
             p.roundSolution()
         # ----------------
         self.prob_ = p
-        print("Status:", LpStatus[p.status])
+        print("Status:", pl.LpStatus[p.status])
         return self
 
     def get_params_w(self, deep=True):
@@ -133,7 +134,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # TODO: we use utils.py and the following lines of codes
             w_solution_dict = dict([(v.name, v.varValue)
                                     for v in self.prob_.variables() if variable_type in v.name])
-            index_map = {v: i for i, v in enumerate(sorted(w_solution_dict.keys(), key=natural_keys))}
+            index_map = {v: i for i, v in enumerate(sorted(w_solution_dict.keys(), key=utils.natural_keys))}
             w_solution_dict = {k: v for k, v in sorted(w_solution_dict.items(), key=lambda pair: index_map[pair[0]])}
         except AttributeError:
             raise RuntimeError("You must fit the data first!")
@@ -147,7 +148,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # TODO: to use the solution. We need to use alphabetical sort based on variables names (v.names). To do so
             # TODO: we use utils.py and the following lines of codes
             w_solution = self.get_params_w()
-            index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=natural_keys))}
+            index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=utils.natural_keys))}
             w_solution = [v for k, v in sorted(w_solution.items(), key=lambda pair: index_map[pair[0]])]
             if self.lp_relaxation:
                 w_solution = [1 if i > self.lp_rounding_threshold else 0 for i in w_solution]

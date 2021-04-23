@@ -4,10 +4,6 @@
 @author: hzabeti
 """
 
-from generate_groups import gen_measurement_matrix
-from generate_individual_status import gen_status_vector
-from group_testing_evaluation import decoder_evaluation
-from group_testing_decoder import *
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 import numpy as np
@@ -18,12 +14,18 @@ import datetime
 import time
 import yaml
 from shutil import copyfile
-from utils import *
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc, balanced_accuracy_score
 from sklearn.metrics import accuracy_score
+
+from generate_groups import gen_measurement_matrix
+from generate_individual_status import gen_status_vector
+from generate_test_results import gen_test_vector
+from group_testing_evaluation import decoder_evaluation
+from group_testing_decoder import GroupTestingDecoder
+import utils
 
 
 def multi_process_group_testing(design_param, decoder_param):
@@ -37,14 +39,14 @@ def multi_process_group_testing(design_param, decoder_param):
                                                "defined in the config file"
             assert design_param['s'] <= design_param['N'], " 's'> 'N': number of infected individuals can not be " \
                                                            "greater than number of individuals."
-            design_param['group_size'] = auto_group_size(design_param['N'],design_param['s'])
+            design_param['group_size'] = utils.auto_group_size(design_param['N'],design_param['s'])
             print("group size is {}".format(design_param['group_size']))
         if design_param['generate_groups'] == 'alternative_module':
             generate_groups_alt_module = __import__(design_param['groups_alternative_module'][0], globals(), locals(),
                                                     [], 0)
             generate_groups_alt_function = getattr(generate_groups_alt_module,
                                                    design_param['groups_alternative_module'][1])
-            passing_param, remaining_param = param_distributor(design_param, generate_groups_alt_function)
+            passing_param, remaining_param = utils.param_distributor(design_param, generate_groups_alt_function)
             A = generate_groups_alt_function(**passing_param)
         elif design_param['generate_groups'] == 'input':
             A = np.genfromtxt(design_param['groups_input'], delimiter=',')
@@ -54,7 +56,7 @@ def multi_process_group_testing(design_param, decoder_param):
             design_param['group_size'] = int(max(A.sum(axis=1)))
             design_param['max_tests_per_individual'] = int(max(A.sum(axis=0)))
         elif design_param['generate_groups'] == 'generate':
-            passing_param, remaining_param = param_distributor(design_param, gen_measurement_matrix)
+            passing_param, remaining_param = utils.param_distributor(design_param, gen_measurement_matrix)
             A = gen_measurement_matrix(**passing_param)
         # generate the infected status of the individuals
         if design_param['generate_individual_status'] == 'input':
@@ -67,11 +69,11 @@ def multi_process_group_testing(design_param, decoder_param):
                                                       globals(), locals(), [], 0)
             individual_status_alt_function = getattr(individual_status_alt_module,
                                                      design_param['individual_status_alternative_module'][1])
-            passing_param, temp_remaining_param = param_distributor(design_param, individual_status_alt_function)
+            passing_param, temp_remaining_param = utils.param_distributor(design_param, individual_status_alt_function)
             remaining_param.update(temp_remaining_param)
             u = individual_status_alt_function(**passing_param)
         elif design_param['generate_individual_status'] == 'generate':
-            passing_param, temp_remaining_param = param_distributor(design_param, gen_status_vector)
+            passing_param, temp_remaining_param = utils.param_distributor(design_param, gen_status_vector)
             remaining_param.update(temp_remaining_param)
             u = gen_status_vector(**passing_param)
             u = [i[0] for i in u]
@@ -85,11 +87,11 @@ def multi_process_group_testing(design_param, decoder_param):
                                                       globals(), locals(), [], 0)
             test_results_alt_function = getattr(test_results_alt_module,
                                                      design_param['test_results_alternative_module'][1])
-            passing_param, temp_remaining_param = param_distributor(design_param, test_results_alt_function)
+            passing_param, temp_remaining_param = utils.param_distributor(design_param, test_results_alt_function)
             remaining_param.update(temp_remaining_param)
             b = test_results_alt_function(**passing_param)
         elif design_param['generate_test_results'] == 'generate':
-            passing_param, temp_remaining_param = param_distributor(design_param, gen_test_vector)
+            passing_param, temp_remaining_param = utils.param_distributor(design_param, gen_test_vector)
             remaining_param.update(temp_remaining_param)
             b = gen_test_vector(A, u,**passing_param)
         for main_param in ['N', 'm', 's', 'group_size', 'seed']:
@@ -100,17 +102,17 @@ def multi_process_group_testing(design_param, decoder_param):
                 else:
                     design_param[main_param]=remaining_param[main_param]
         if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
-            design_path = inner_path_generator(result_path, 'Design')
-            design_matrix_path = inner_path_generator(design_path, 'Design_Matrix')
-            pd.DataFrame(A).to_csv(report_file_path(design_matrix_path, 'design_matrix', 'csv', design_param),
+            design_path = utils.inner_path_generator(result_path, 'Design')
+            design_matrix_path = utils.inner_path_generator(design_path, 'Design_Matrix')
+            pd.DataFrame(A).to_csv(utils.report_file_path(design_matrix_path, 'design_matrix', 'csv', design_param),
                                    header=None, index=None)
             if design_param['generate_individual_status']:
-                individual_status_path = inner_path_generator(design_path,'Individual_Status')
-                pd.DataFrame(u).to_csv(report_file_path(individual_status_path, 'individual_status','csv', design_param),
+                individual_status_path = utils.inner_path_generator(design_path,'Individual_Status')
+                pd.DataFrame(u).to_csv(utils.report_file_path(individual_status_path, 'individual_status','csv', design_param),
                                        header=None, index=None)
             if design_param['generate_test_results']:
-                test_results_path = inner_path_generator(design_path,'Test_Results')
-                pd.DataFrame(b).to_csv(report_file_path(test_results_path, 'test_results','csv', design_param),
+                test_results_path = utils.inner_path_generator(design_path,'Test_Results')
+                pd.DataFrame(b).to_csv(utils.report_file_path(test_results_path, 'test_results','csv', design_param),
                                        header=None, index=None)
     except Exception as design_error:
         print(design_error)
@@ -120,8 +122,8 @@ def multi_process_group_testing(design_param, decoder_param):
         try:
             if decoder_param['decoder'] == 'generate':
                 # TODO: this is only for cplex! Change it to more general form!
-                decoder_param['solver_options']['logPath'] = report_file_path(log_path, 'log','txt', design_param)
-                passing_param,_ = param_distributor(decoder_param,GroupTestingDecoder)
+                decoder_param['solver_options']['logPath'] = utils.report_file_path(log_path, 'log','txt', design_param)
+                passing_param,_ = utils.param_distributor(decoder_param,GroupTestingDecoder)
                 c = GroupTestingDecoder(**passing_param)
                 single_fit_start = time.time()
                 if decoder_param['lambda_selection']:
@@ -135,9 +137,9 @@ def multi_process_group_testing(design_param, decoder_param):
                     grid.fit(A, b)
 
                     c = grid.best_estimator_
-                    pd.DataFrame.from_dict(grid.cv_results_).to_csv(report_file_path(log_path,'cv_results',
+                    pd.DataFrame.from_dict(grid.cv_results_).to_csv(utils.report_file_path(log_path,'cv_results',
                                                                                      'csv', design_param))
-                    pd.DataFrame(grid.best_params_, index=[0]).to_csv(report_file_path(log_path, 'best_param',
+                    pd.DataFrame(grid.best_params_, index=[0]).to_csv(utils.report_file_path(log_path, 'best_param',
                                                                                        'csv', design_param))
                 else:
                     c.fit(A, b)
@@ -151,13 +153,13 @@ def multi_process_group_testing(design_param, decoder_param):
                                                      globals(), locals(), [], 0)
                 decoder_alt_function = getattr(decoder_alt_module,
                                                     decoder_param['decoder_alternative_module'][1])
-                passing_param, _ = param_distributor(decoder_param, decoder_alt_function)
+                passing_param, _ = utils.param_distributor(decoder_param, decoder_alt_function)
                 c = decoder_alt_function(**passing_param)
                 c.fit(A, b)
                 single_fit_end = time.time()
             if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
-                solution_path = inner_path_generator(result_path, 'Solutions')
-                pd.DataFrame(c.solution()).to_csv(report_file_path(solution_path, 'solution','csv', design_param),
+                solution_path = utils.inner_path_generator(result_path, 'Solutions')
+                pd.DataFrame(c.solution()).to_csv(utils.report_file_path(solution_path, 'solution','csv', design_param),
                                                   header=None, index=None)
                 # evaluate the accuracy of the solution
             if decoder_param['evaluation']:
@@ -186,10 +188,10 @@ def multi_process_group_testing(design_param, decoder_param):
 if __name__ == '__main__':
     start_time = time.time()
     # Read config file
-    design_param, decoder_param = config_reader('config.yml')
+    design_param, decoder_param = utils.config_reader('config.yml')
     # output files path
-    current_path, result_path = result_path_generator()
-    log_path = inner_path_generator(result_path, 'Logs')
+    current_path, result_path = utils.result_path_generator()
+    log_path = utils.inner_path_generator(result_path, 'Logs')
     if not decoder_param[0]['lambda_selection']:
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(multi_process_group_testing, itertools.product(design_param, decoder_param))

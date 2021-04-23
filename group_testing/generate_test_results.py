@@ -10,9 +10,10 @@ import sys, math
 from os import path
 import random
 import numpy as np
+
 from generate_groups import gen_measurement_matrix
 from generate_individual_status import gen_status_vector
-from utils import *
+import utils
 
 # np.set_printoptions(threshold=np.inf)
 np.set_printoptions(edgeitems=60, linewidth=100000,
@@ -222,9 +223,9 @@ if __name__ == '__main__':
     opts['verbose'] = False
     opts['plotting'] = False
     opts['saving'] = False
-    passing_param, _ = param_distributor(opts, gen_measurement_matrix)
+    passing_param, _ = utils.param_distributor(opts, gen_measurement_matrix)
     A = gen_measurement_matrix(**passing_param)
-    passing_param, _ = param_distributor(opts, gen_status_vector)
+    passing_param, _ = utils.param_distributor(opts, gen_status_vector)
     u = gen_status_vector(**passing_param)
 
     opts['verbose'] = True

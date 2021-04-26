@@ -4,6 +4,7 @@
 @author: hzabeti
 """
 
+import argparse
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 import numpy as np
@@ -19,7 +20,9 @@ from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc, balanced_accuracy_score
 from sklearn.metrics import accuracy_score
+import sys
 
+from group_testing import __version__
 from group_testing.generate_groups import gen_measurement_matrix
 from group_testing.generate_individual_status import gen_status_vector
 from group_testing.generate_test_results import gen_test_vector
@@ -189,12 +192,30 @@ def multi_process_group_testing(design_param, decoder_param):
 
 
 # main method for testing
-def main():
+def main(sysargs=sys.argv[1:]):
     start_time = time.time()
+    
+    # argparse
+    parser = argparse.ArgumentParser(prog='GroupTesting', description='Description')
+    required_args= parser.add_argument_group('required arguments')
+    parser.add_argument(
+        '--version', action='version', 
+        version="%(prog)s version {version}".format(version=__version__)
+    )
+    required_args.add_argument(
+        '--config', dest='config', metavar='FILE', 
+        help='Path to the config.yml file', required=True,
+    )
+    parser.add_argument(
+        '--output-dir', dest='output_path', metavar='DIR', 
+        help='Path to the output directory',
+    )
+    args = parser.parse_args()
+
     # Read config file
-    design_param, decoder_param = utils.config_reader('config.yml')
+    design_param, decoder_param = utils.config_reader(args.config)
     # output files path
-    current_path, design_param[0]['result_path'] = utils.result_path_generator()
+    current_path, design_param[0]['result_path'] = utils.result_path_generator(args)
     design_param[0]['log_path'] = utils.inner_path_generator(design_param[0]['result_path'], 'Logs')
     if not decoder_param[0]['lambda_selection']:
         with Pool(processes=cpu_count()) as pool:

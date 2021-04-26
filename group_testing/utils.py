@@ -161,7 +161,7 @@ def report_file_path(report_path, report_label,report_extension, params):
     return report_path
 
 
-def result_path_generator(dir_name=None):
+def result_path_generator(args, dir_name=None):
     current_path = os.getcwd()
     currentDate = datetime.datetime.now()
     if dir_name is None:
@@ -175,7 +175,7 @@ def result_path_generator(dir_name=None):
         else:
             print("Successfully created the directory %s " % result_path)
     # Copy config file
-    copyfile('config.yml', os.path.join(result_path, 'config.yml'))
+    copyfile(args.config, os.path.join(result_path, 'config.yml'))
     return current_path, result_path
 
 

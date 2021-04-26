@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import balanced_accuracy_score
 
-from generate_test_results import gen_test_vector
-import utils 
+from group_testing.generate_test_results import gen_test_vector
+import group_testing.utils as utils
 
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):

@@ -20,12 +20,12 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc, balanced_accuracy_score
 from sklearn.metrics import accuracy_score
 
-from generate_groups import gen_measurement_matrix
-from generate_individual_status import gen_status_vector
-from generate_test_results import gen_test_vector
-from group_testing_evaluation import decoder_evaluation
-from group_testing_decoder import GroupTestingDecoder
-import utils
+from group_testing.generate_groups import gen_measurement_matrix
+from group_testing.generate_individual_status import gen_status_vector
+from group_testing.generate_test_results import gen_test_vector
+from group_testing.group_testing_evaluation import decoder_evaluation
+from group_testing.group_testing_decoder import GroupTestingDecoder
+import group_testing.utils as utils
 
 
 def multi_process_group_testing(design_param, decoder_param):
@@ -102,7 +102,7 @@ def multi_process_group_testing(design_param, decoder_param):
                 else:
                     design_param[main_param]=remaining_param[main_param]
         if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
-            design_path = utils.inner_path_generator(result_path, 'Design')
+            design_path = utils.inner_path_generator(design_param['result_path'], 'Design')
             design_matrix_path = utils.inner_path_generator(design_path, 'Design_Matrix')
             pd.DataFrame(A).to_csv(utils.report_file_path(design_matrix_path, 'design_matrix', 'csv', design_param),
                                    header=None, index=None)
@@ -122,7 +122,7 @@ def multi_process_group_testing(design_param, decoder_param):
         try:
             if decoder_param['decoder'] == 'generate':
                 # TODO: this is only for cplex! Change it to more general form!
-                decoder_param['solver_options']['logPath'] = utils.report_file_path(log_path, 'log','txt', design_param)
+                decoder_param['solver_options']['logPath'] = utils.report_file_path(design_param['log_path'], 'log','txt', design_param)
                 passing_param,_ = utils.param_distributor(decoder_param,GroupTestingDecoder)
                 c = GroupTestingDecoder(**passing_param)
                 single_fit_start = time.time()
@@ -137,10 +137,14 @@ def multi_process_group_testing(design_param, decoder_param):
                     grid.fit(A, b)
 
                     c = grid.best_estimator_
-                    pd.DataFrame.from_dict(grid.cv_results_).to_csv(utils.report_file_path(log_path,'cv_results',
-                                                                                     'csv', design_param))
-                    pd.DataFrame(grid.best_params_, index=[0]).to_csv(utils.report_file_path(log_path, 'best_param',
-                                                                                       'csv', design_param))
+                    pd.DataFrame.from_dict(grid.cv_results_).to_csv(
+                        utils.report_file_path(design_param['log_path'],
+                        'cv_results', 'csv', design_param)
+                    )
+                    pd.DataFrame(grid.best_params_, index=[0]).to_csv(
+                        utils.report_file_path(design_param['log_path'], 
+                        'best_param', 'csv', design_param)
+                    )
                 else:
                     c.fit(A, b)
                 single_fit_end = time.time()
@@ -158,7 +162,7 @@ def multi_process_group_testing(design_param, decoder_param):
                 c.fit(A, b)
                 single_fit_end = time.time()
             if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
-                solution_path = utils.inner_path_generator(result_path, 'Solutions')
+                solution_path = utils.inner_path_generator(design_param['result_path'], 'Solutions')
                 pd.DataFrame(c.solution()).to_csv(utils.report_file_path(solution_path, 'solution','csv', design_param),
                                                   header=None, index=None)
                 # evaluate the accuracy of the solution
@@ -185,13 +189,13 @@ def multi_process_group_testing(design_param, decoder_param):
 
 
 # main method for testing
-if __name__ == '__main__':
+def main():
     start_time = time.time()
     # Read config file
     design_param, decoder_param = utils.config_reader('config.yml')
     # output files path
-    current_path, result_path = utils.result_path_generator()
-    log_path = utils.inner_path_generator(result_path, 'Logs')
+    current_path, design_param[0]['result_path'] = utils.result_path_generator()
+    design_param[0]['log_path'] = utils.inner_path_generator(design_param[0]['result_path'], 'Logs')
     if not decoder_param[0]['lambda_selection']:
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(multi_process_group_testing, itertools.product(design_param, decoder_param))
@@ -201,12 +205,12 @@ if __name__ == '__main__':
         results = [multi_process_group_testing(i[0], i[1]) for i in itertools.product(design_param, decoder_param)]
 
     # Saving files
-    pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
+    pd.DataFrame(design_param).to_csv(os.path.join(design_param[0]['result_path'], 'opts.csv'))
     #print("---------------------->", results)
     if all(v is not None for v in results):
         column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
                         decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']
-        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'ConfusionMatrix.csv'))
+        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(design_param[0]['result_path'], 'ConfusionMatrix.csv'))
 
     end_time = time.time()
     print(end_time - start_time)

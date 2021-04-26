@@ -11,9 +11,9 @@ from os import path
 import random
 import numpy as np
 
-from generate_groups import gen_measurement_matrix
-from generate_individual_status import gen_status_vector
-import utils
+from group_testing.generate_groups import gen_measurement_matrix
+from group_testing.generate_individual_status import gen_status_vector
+import group_testing.utils as utils
 
 # np.set_printoptions(threshold=np.inf)
 np.set_printoptions(edgeitems=60, linewidth=100000,

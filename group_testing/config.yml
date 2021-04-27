@@ -6,7 +6,7 @@ design:
     params:
       seed:
         mode: 'range'
-        values: [0,1,1]
+        values: [0,2,1]
       N: 1000
       'm': 500
       'verbose': False

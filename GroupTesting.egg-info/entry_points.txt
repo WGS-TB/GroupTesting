@@ -1,4 +1,0 @@
-
-    [console_scripts]
-    GroupTesting = group_testing.group_testing:main
-    

@@ -163,14 +163,22 @@ def report_file_path(report_path, report_label, report_extension, params):
     return report_path
 
 
+def dict_key_checker(current_dict, current_key):
+    if current_key in current_dict.keys():
+        return True
+    else:
+        return False
+
+
 def result_path_generator(args):
     current_path = os.getcwd()
     currentDate = datetime.datetime.now()
     if args.output_path is None:
         dir_name = currentDate.strftime("%b_%d_%Y_%H_%M_%S")
+        result_path = os.path.join(current_path, "Results/{}".format(dir_name))
     else:
         dir_name = args.output_path
-    result_path = os.path.join(current_path, "Results/{}".format(dir_name))
+        result_path = os.path.join(current_path, dir_name)
     if not os.path.isdir(result_path):
         try:
             os.makedirs(result_path)
@@ -179,7 +187,8 @@ def result_path_generator(args):
         else:
             print("Successfully created the directory %s " % result_path)
     # Copy config file
-    copyfile(args.config, os.path.join(result_path, 'config.yml'))
+    if os.path.isfile(args.config):
+        copyfile(args.config, os.path.join(result_path, 'config.yml'))
     return current_path, result_path
 
 

@@ -36,9 +36,12 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         self.solver_name = solver_name
         self.solver_options = solver_options
         self.prob_ = None
-        self.ep_cat = 'Binary'
-        self.en_cat = 'Binary'
-        self.en_upBound = 1
+        # self.ep_cat = 'Binary'
+        # self.en_cat = 'Binary'
+        if self.lp_relaxation:
+            self.en_upBound = 1
+        else:
+            self.en_upBound = None
 
     def fit(self, A, label):
         if self.lambda_e is not None:
@@ -67,6 +70,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         # Variables kind
         if self.lp_relaxation:
             varCategory = 'Continuous'
+            #self.solver_options['mip']= True
         else:
             varCategory = 'Binary'
         # Variable w
@@ -93,11 +97,11 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             en = []
             # Variable ep
             if len(positive_label) != 0:
-                ep = LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat=self.ep_cat)
+                ep = pl.LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat=varCategory)
             # Variable en
             if len(negative_label) != 0:
-                en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
-                                      cat=self.en_cat)
+                en = pl.LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
+                                      cat=varCategory)
             # Defining the objective function
             p += pl.lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)]) + \
@@ -107,20 +111,23 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             for i in positive_label:
                 p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
             for i in negative_label:
-                if self.en_cat == 'Continuous':
+                if varCategory == 'Continuous':
                     p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
                 else:
                     p += pl.lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
                 p += pl.lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
-        solver = pl.get_solver(self.solver_name, **self.solver_options)
+        if self.solver_options is not None:
+            solver = pl.get_solver(self.solver_name, **self.solver_options)
+        else:
+            solver = pl.get_solver(self.solver_name)
         p.solve(solver)
         if not self.lp_relaxation:
             p.roundSolution()
         # ----------------
         self.prob_ = p
-        print("Status:", pl.LpStatus[p.status])
+        #print("Status:", pl.LpStatus[p.status])
         return self
 
     def get_params_w(self, deep=True):

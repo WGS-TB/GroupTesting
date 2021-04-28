@@ -7,8 +7,7 @@ def decoder_evaluation(w_true, sln, ev_metric='balanced_accuracy'):
     tn, fp, fn, tp = confusion_matrix(w_true, sln).ravel()
     eval_metric = getattr(sklearn.metrics,'{}_score'.format(ev_metric))
     eval_score = eval_metric(w_true, sln)
-    ev_result = {'tn': tn, 'fp': fp, 'fn': fn, 'tp':tp, ev_metric:round(eval_score, 3)}
-    print(ev_result)
+    ev_result = {'tn': tn, 'fp': fp, 'fn': fn, 'tp': tp, ev_metric: round(eval_score, 3)}
     return ev_result
 
 

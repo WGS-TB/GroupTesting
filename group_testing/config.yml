@@ -51,8 +51,10 @@ decode:
       'is_it_noiseless': True
       'lp_relaxation': False
       'solver_name': 'CPLEX_PY'
+      #['GLPK_CMD', 'CPLEX_PY', 'GUROBI_CMD', 'PULP_CBC_CMD', 'COIN_CMD', 'PULP_CHOCO_CMD']
       'solver_options':
         'timeLimit': 1800
+        'logPath': 'auto'
       'lambda_selection': False
       'number_of_folds': 3
       'cv_param':

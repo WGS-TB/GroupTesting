@@ -5,6 +5,7 @@
 """
 
 import argparse
+from distutils.util import strtobool
 from multiprocessing import Pool
 from multiprocessing import cpu_count
 import numpy as np
@@ -21,6 +22,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc, balanced_accuracy_score
 from sklearn.metrics import accuracy_score
 import sys
+import pulp as pl
 
 from group_testing import __version__
 from group_testing.generate_groups import gen_measurement_matrix
@@ -35,14 +37,14 @@ def multi_process_group_testing(design_param, decoder_param):
     try:
         single_run_start = time.time()
         # generate the measurement matrix from the given options
-        if 'group_size' in design_param.keys() and str(design_param['group_size']).lower()=='auto':
+        if 'group_size' in design_param.keys() and str(design_param['group_size']).lower() == 'auto':
             assert 'N' in design_param.keys(), "To generate the group size automatically parameter 'N' is needed to be" \
                                                "defined in the config file"
             assert 's' in design_param.keys(), "To generate the group size automatically parameter 's' is needed to be" \
                                                "defined in the config file"
             assert design_param['s'] <= design_param['N'], " 's'> 'N': number of infected individuals can not be " \
                                                            "greater than number of individuals."
-            design_param['group_size'] = utils.auto_group_size(design_param['N'],design_param['s'])
+            design_param['group_size'] = utils.auto_group_size(design_param['N'], design_param['s'])
             print("group size is {}".format(design_param['group_size']))
         if design_param['generate_groups'] == 'alternative_module':
             generate_groups_alt_module = __import__(design_param['groups_alternative_module'][0], globals(), locals(),
@@ -53,7 +55,6 @@ def multi_process_group_testing(design_param, decoder_param):
             A = generate_groups_alt_function(**passing_param)
         elif design_param['generate_groups'] == 'input':
             A = np.genfromtxt(design_param['groups_input'], delimiter=',')
-            # TODO: Check if m and N are defined too
             assert np.array_equal(A, A.astype(bool)), "The input design matrix A is not binary!"
             design_param['m'], design_param['N'] = A.shape
             design_param['group_size'] = int(max(A.sum(axis=1)))
@@ -87,34 +88,35 @@ def multi_process_group_testing(design_param, decoder_param):
             assert np.array_equal(b, b.astype(bool)), "test results input file is not binary!"
         elif design_param['generate_test_results'] == 'alternative_module':
             test_results_alt_module = __import__(design_param['test_results_alternative_module'][0],
-                                                      globals(), locals(), [], 0)
+                                                 globals(), locals(), [], 0)
             test_results_alt_function = getattr(test_results_alt_module,
-                                                     design_param['test_results_alternative_module'][1])
+                                                design_param['test_results_alternative_module'][1])
             passing_param, temp_remaining_param = utils.param_distributor(design_param, test_results_alt_function)
             remaining_param.update(temp_remaining_param)
             b = test_results_alt_function(**passing_param)
         elif design_param['generate_test_results'] == 'generate':
             passing_param, temp_remaining_param = utils.param_distributor(design_param, gen_test_vector)
             remaining_param.update(temp_remaining_param)
-            b = gen_test_vector(A, u,**passing_param)
+            b = gen_test_vector(A, u, **passing_param)
         for main_param in ['N', 'm', 's', 'group_size', 'seed']:
             if main_param not in design_param:
                 if main_param not in remaining_param:
-                    design_param[main_param]= 'N\A'
+                    design_param[main_param] = 'N\A'
                 else:
-                    design_param[main_param]=remaining_param[main_param]
+                    design_param[main_param] = remaining_param[main_param]
         if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
             design_path = utils.inner_path_generator(design_param['result_path'], 'Design')
             design_matrix_path = utils.inner_path_generator(design_path, 'Design_Matrix')
             pd.DataFrame(A).to_csv(utils.report_file_path(design_matrix_path, 'design_matrix', 'csv', design_param),
                                    header=None, index=None)
             if design_param['generate_individual_status']:
-                individual_status_path = utils.inner_path_generator(design_path,'Individual_Status')
-                pd.DataFrame(u).to_csv(utils.report_file_path(individual_status_path, 'individual_status','csv', design_param),
-                                       header=None, index=None)
+                individual_status_path = utils.inner_path_generator(design_path, 'Individual_Status')
+                pd.DataFrame(u).to_csv(
+                    utils.report_file_path(individual_status_path, 'individual_status', 'csv', design_param),
+                    header=None, index=None)
             if design_param['generate_test_results']:
-                test_results_path = utils.inner_path_generator(design_path,'Test_Results')
-                pd.DataFrame(b).to_csv(utils.report_file_path(test_results_path, 'test_results','csv', design_param),
+                test_results_path = utils.inner_path_generator(design_path, 'Test_Results')
+                pd.DataFrame(b).to_csv(utils.report_file_path(test_results_path, 'test_results', 'csv', design_param),
                                        header=None, index=None)
     except:
         e = sys.exc_info()
@@ -124,10 +126,21 @@ def multi_process_group_testing(design_param, decoder_param):
     if decoder_param['decoding']:
         try:
             if decoder_param['decoder'] == 'generate':
-                # TODO: this is only for cplex! Change it to more general form!
-                log_path = utils.inner_path_generator(design_param['result_path'], 'Logs')
-                decoder_param['solver_options']['logPath'] = utils.report_file_path(log_path, 'log','txt', design_param)
-                passing_param,_ = utils.param_distributor(decoder_param,GroupTestingDecoder)
+                if utils.dict_key_checker(decoder_param, 'solver_options') \
+                        and utils.dict_key_checker(decoder_param['solver_options'], 'logPath') \
+                        or decoder_param['lambda_selection']:
+                    log_path = utils.inner_path_generator(design_param['result_path'], 'Logs')
+                if utils.dict_key_checker(decoder_param, 'solver_options') \
+                        and utils.dict_key_checker(decoder_param['solver_options'], 'logPath'):
+                    if str(decoder_param['solver_options']['logPath']).lower() == 'auto':
+                        decoder_param['solver_options']['logPath'] = utils.report_file_path(log_path, 'log', 'txt',
+                                                                                            design_param)
+                    else:
+                        decoder_param['solver_options']['logPath'] = os.path.join(log_path,
+                                                                                  decoder_param['solver_options'][
+                                                                                      'logPath'])
+
+                passing_param, _ = utils.param_distributor(decoder_param, GroupTestingDecoder)
                 c = GroupTestingDecoder(**passing_param)
                 single_fit_start = time.time()
                 if decoder_param['lambda_selection']:
@@ -143,11 +156,11 @@ def multi_process_group_testing(design_param, decoder_param):
                     c = grid.best_estimator_
                     pd.DataFrame.from_dict(grid.cv_results_).to_csv(
                         utils.report_file_path(log_path,
-                        'cv_results', 'csv', design_param)
+                                               'cv_results', 'csv', design_param)
                     )
                     pd.DataFrame(grid.best_params_, index=[0]).to_csv(
                         utils.report_file_path(log_path,
-                        'best_param', 'csv', design_param)
+                                               'best_param', 'csv', design_param)
                     )
                 else:
                     c.fit(A, b)
@@ -158,25 +171,27 @@ def multi_process_group_testing(design_param, decoder_param):
                 # TODO: CV for alternative module. Is it needed?
                 single_fit_start = time.time()
                 decoder_alt_module = __import__(decoder_param['decoder_alternative_module'][0],
-                                                     globals(), locals(), [], 0)
+                                                globals(), locals(), [], 0)
                 decoder_alt_function = getattr(decoder_alt_module,
-                                                    decoder_param['decoder_alternative_module'][1])
+                                               decoder_param['decoder_alternative_module'][1])
                 passing_param, _ = utils.param_distributor(decoder_param, decoder_alt_function)
                 c = decoder_alt_function(**passing_param)
                 c.fit(A, b)
                 single_fit_end = time.time()
             if 'save_to_file' in design_param.keys() and design_param['save_to_file']:
                 solution_path = utils.inner_path_generator(design_param['result_path'], 'Solutions')
-                pd.DataFrame(c.solution()).to_csv(utils.report_file_path(solution_path, 'solution','csv', design_param),
-                                                  header=None, index=None)
+                pd.DataFrame(c.solution()).to_csv(
+                    utils.report_file_path(solution_path, 'solution', 'csv', design_param),
+                    header=None, index=None)
                 # evaluate the accuracy of the solution
             if decoder_param['evaluation']:
                 try:
                     ev_result = decoder_evaluation(u, c.solution(), decoder_param['eval_metric'])
-                    ev_result['solver_time'] = round(single_fit_end - single_fit_start, 2)
-                    # TODO: this is only for cplex status! Change it to more general form!
-                    ev_result['Status'] = c.prob_.cplex_status
-                    print('Evaluation is DONE!')
+                    ev_result['fitting_time'] = round(single_fit_end - single_fit_start, 2)
+                    if 'cplex_status' in c.prob_.__dict__.keys():
+                        ev_result['Status'] = c.prob_.cplex_status
+                    else:
+                        ev_result['Status'] = pl.LpStatus[c.prob_.status]
                 except Exception as e:
                     print(e)
                     ev_result = {'tn': None, 'fp': None, 'fn': None, 'tp': None}
@@ -191,35 +206,64 @@ def multi_process_group_testing(design_param, decoder_param):
         print("Decoding was not performed!")
 
 
-
 # main method for testing
 def main(sysargs=sys.argv[1:]):
     start_time = time.time()
-    
+
     # argparse
     parser = argparse.ArgumentParser(prog='GroupTesting', description='Description')
-    required_args= parser.add_argument_group('required arguments')
+    required_args = parser.add_argument_group('required arguments')
     parser.add_argument(
-        '--version', action='version', 
+        '--version', action='version',
         version="%(prog)s version {version}".format(version=__version__)
     )
     required_args.add_argument(
-        '--config', dest='config', metavar='FILE', 
+        '--config', dest='config', metavar='FILE',
         help='Path to the config.yml file', required=True,
     )
     parser.add_argument(
-        '--output-dir', dest='output_path', metavar='DIR', 
+        '--output-dir', dest='output_path', metavar='DIR',
         help='Path to the output directory',
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        '--parallel', dest='parallel', metavar='BOOL',
+        help='whether to use multiprocessing. The default value is True.', default=True, type=bool
+    )
+    # parser.add_argument(
+    #     '--seed', dest='seed', metavar='RAND_SEED',
+    #     help='Random seed', type=int
+    # )
+    # parser.add_argument(
+    #     '-N', dest='N', metavar='NUM_OF_INDIVIDUALS',
+    #     help='Population size', type=int
+    # )
+    # parser.add_argument(
+    #     '-m', dest='m', metavar='NUM_OF_TEST',
+    #     help='Number of tests', type=int
+    # )
+    # parser.add_argument(
+    #     '-g', '--group-size', dest='group_size',
+    #     help='Group size', type=int
+    # )
+    # parser.add_argument(
+    #     '-d', '--divisibility', dest='max_tests_per_individual', metavar='Divisibility',
+    #     help='Divisibility or maximum number of times a person’s sample can be included in a test. ', type=int
+    # )
+    # parser.add_argument(
+    #     '-s', dest='s', metavar='NUM_OF_INFECTED',
+    #     help='number of infecteds', type=int
+    # )
 
+    args = parser.parse_args()
+    #print("------------------->",args.N)
     # Read config file
     design_param, decoder_param = utils.config_reader(args.config)
     # output files path
     current_path, result_path = utils.result_path_generator(args)
     for d in design_param:
         d['result_path'] = result_path
-    if not any([d['lambda_selection'] if 'lambda_selection' in d.keys() else False for d in decoder_param]):
+    if args.parallel \
+            and not any([d['lambda_selection'] if 'lambda_selection' in d.keys() else False for d in decoder_param]):
         with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(multi_process_group_testing, itertools.product(design_param, decoder_param))
             pool.close()
@@ -231,7 +275,8 @@ def main(sysargs=sys.argv[1:]):
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
     if all(v is not None for v in results):
         column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
-                        decoder_param[0]['eval_metric'], 'Status', 'solver_time', 'time']
+                        decoder_param[0]['eval_metric'], 'Status', 'fitting_time', 'time']
+        print(pd.DataFrame(results).reindex(columns=column_names))
         pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'ConfusionMatrix.csv'))
 
     end_time = time.time()

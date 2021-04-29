@@ -15,10 +15,19 @@ np.set_printoptions(edgeitems=60, linewidth=100000,
     formatter=dict(float=lambda x: "%.3g" % x))
 import scipy.io as sio
 
-"""
-Function to generate the infected status of individuals (a vector)
-"""
 def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
+    """
+    Function to generate the infected status of individuals (a vector)
+
+    Parameters:
+        seed (int): Seed for random number generation
+        N (int): Population size
+        s (int): Number of infected individuals
+        verbose (bool): Flag for turning on debugging print statements
+
+    Returns:
+        u (binary numpy array): The status vector
+    """
 
     # set the seed used for status generation
     local_random = random.Random()
@@ -42,6 +51,9 @@ def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
     return u
 
 if __name__ == '__main__':
+    """
+    Main method for testing
+    """
 
     # options for plotting, verbose output, saving, seed
     opts = {}

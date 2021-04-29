@@ -26,22 +26,29 @@ import scipy.io as sio
 # import plotting and data-manipulation tools
 # import matplotlib.pyplot as plt
 
-"""
-Unit testing to be added later
-"""
-# class TestMeasurementMatrix(unittest.TestCase):
-#
-#    def test_make_graph(self):
-#        gen_measurement_matrix(opts)
 
-
-"""
-Function to generate and return the matrix
-"""
 
 
 def gen_measurement_matrix(seed=0, N=1000, m=100, group_size=4, max_tests_per_individual=4, verbose=False,
                            graph_gen_method='no_multiple', plotting=False, saving=True, run_ID='debugging'):
+    """
+    Function to generate and return the group testing matrix based on near-doubly-regular design 
+
+    Parameters:
+        seed (int): Seed for random number generation
+        N (int): Population size
+        m (int): Number of group tests
+        group_size (int): Size of the groups
+        max_tests_per_individual (int): Maximum number of tests allowed per individual
+        verbose (bool): Flag for turning on debugging print statements
+        graph_gen_method (str): Method for igraph to use in generating the graph
+        plotting (bool): Flag for turning on plotting 
+        saving (bool): Flag for turning on saving the result
+        run_ID (str): String for specifying name of run
+
+    Returns:
+        A (binary numpy array): The group testing matrix
+    """
 
     # set the seed used for graph generation to the options seed
     random.seed(seed)
@@ -203,8 +210,10 @@ def gen_measurement_matrix(seed=0, N=1000, m=100, group_size=4, max_tests_per_in
     return A
 
 
-# main method for testing
 if __name__ == '__main__':
+    """
+    Main method for testing
+    """
 
     # print igraph version
     print("Loaded igraph version {}".format(igraph.__version__))

@@ -20,14 +20,28 @@ np.set_printoptions(edgeitems=60, linewidth=100000,
                     formatter=dict(float=lambda x: "%.3g" % x))
 import scipy.io as sio
 
-"""
-Function to generate the results of the tests from the measurement matrix A 
-and the status vector u
-"""
-
-
 def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], binary_symmetric_noise_prob=0.26,
                     theta_l=0, theta_u=0.0625, permutation_noise_prob=0.01):
+    """
+    Function to generate the results of the tests from the measurement matrix A 
+    and the status vector u in both the noiseless and noisy setting
+
+    Parameters:
+        A (binary numpy array): The group testing matrix
+        u (binary numpy array): The individual status vector
+        seed (int): Seed for random number generation
+        m (int): Number of group tests
+        verbose (bool): Flag for turning on debugging print statements
+        test_noise_methods (str list): The list of noise models to apply
+        binary_symmetric_noise_prob (float): The noise level for the binary symmetric noise model
+        theta_l (float): The lower bound for the threshold noise model
+        theta_u (float): The upper bound for the threshold noise model
+        permutation_noise_prob (float): The noise level for the permutation noise model
+
+    Returns:
+        b (binary numpy array): The vector of results of the group tests
+    """
+
     # set the seed used for test result noise
     random.seed(seed)
     np_random = np.random.RandomState(seed)
@@ -189,6 +203,9 @@ def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], b
 
 
 if __name__ == '__main__':
+    """
+    Main method for testing
+    """
 
     # options for plotting, verbose output, saving, seed
     opts = {}

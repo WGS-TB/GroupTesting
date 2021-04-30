@@ -48,7 +48,7 @@ decode:
       'lambda_e': 4
       'is_it_noiseless': True
       'lp_relaxation': False
-      'solver_name': 'CPLEX_PY'
+      'solver_name': 'PULP_CBC_CMD'
       #['GLPK_CMD', 'CPLEX_PY', 'GUROBI_CMD', 'PULP_CBC_CMD', 'COIN_CMD', 'PULP_CHOCO_CMD']
       'solver_options':
         'timeLimit': 1800

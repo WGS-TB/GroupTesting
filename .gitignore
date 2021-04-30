@@ -13,4 +13,7 @@ PaperPlotTable.py
 generate_groups_alt.py
 dist
 build
-GroupTesting.egg-info
+GroupTesting*.egg-info
+.venv
+__pycache__/
+env/

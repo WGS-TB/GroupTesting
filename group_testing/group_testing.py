@@ -34,6 +34,19 @@ import group_testing.utils as utils
 
 
 def multi_process_group_testing(design_param, decoder_param):
+    """
+    Function to distribute parameters obtained from the config file to each module of the GroupTesting framework.
+
+    Parameter:
+
+        design_param (dict): Dictionary of parameters of design stage of the framework. i.e. generate_groups,
+         generate_individual_status, generate_test_results.
+        decoder_param (dict): Dictionary of parameters of decoding stage of the framework. i.e. group_testing_decoder,
+         group_testing_evaluation.
+
+    Returns:
+        ev_result (dict): Dictionary of evaluation results.
+    """
     try:
         single_run_start = time.time()
         # generate the measurement matrix from the given options
@@ -45,7 +58,7 @@ def multi_process_group_testing(design_param, decoder_param):
             assert design_param['s'] <= design_param['N'], " 's'> 'N': number of infected individuals can not be " \
                                                            "greater than number of individuals."
             design_param['group_size'] = utils.auto_group_size(design_param['N'], design_param['s'])
-            print("group size is {}".format(design_param['group_size']))
+            #print("group size is {}".format(design_param['group_size']))
         if design_param['generate_groups'] == 'alternative_module':
             generate_groups_alt_module = __import__(design_param['groups_alternative_module'][0], globals(), locals(),
                                                     [], 0)
@@ -198,7 +211,10 @@ def multi_process_group_testing(design_param, decoder_param):
                 single_run_end = time.time()
                 ev_result['time'] = round(single_run_end - single_run_start, 2)
                 ev_result.update({key: design_param[key] for key in ['N', 'm', 's', 'group_size', 'seed',
-                                                                     'max_tests_per_individual']})
+                                                                     'max_tests_per_individual', 'test_noise_methods',
+                                                                     'permutation_noise_prob', 'theta_l',
+                                                                     'theta_u', 'binary_symmetric_noise_prob']
+                                  if key in design_param.keys()})
                 return ev_result
         except Exception as e:
             print(e)
@@ -208,6 +224,13 @@ def multi_process_group_testing(design_param, decoder_param):
 
 # main method for testing
 def main(sysargs=sys.argv[1:]):
+    """
+    Main method for running the GroupTesting framework.
+
+    Parameters:
+
+        sysargs: args from command-line.
+    """
     start_time = time.time()
 
     # argparse
@@ -219,7 +242,7 @@ def main(sysargs=sys.argv[1:]):
     )
     required_args.add_argument(
         '--config', dest='config', metavar='FILE',
-        help='Path to the config.yml file', required=True,
+        help='Path to the config.yml file'
     )
     parser.add_argument(
         '--output-dir', dest='output_path', metavar='DIR',
@@ -229,33 +252,17 @@ def main(sysargs=sys.argv[1:]):
         '--parallel', dest='parallel', metavar='BOOL',
         help='whether to use multiprocessing. The default value is True.', default=True, type=bool
     )
-    # parser.add_argument(
-    #     '--seed', dest='seed', metavar='RAND_SEED',
-    #     help='Random seed', type=int
-    # )
-    # parser.add_argument(
-    #     '-N', dest='N', metavar='NUM_OF_INDIVIDUALS',
-    #     help='Population size', type=int
-    # )
-    # parser.add_argument(
-    #     '-m', dest='m', metavar='NUM_OF_TEST',
-    #     help='Number of tests', type=int
-    # )
-    # parser.add_argument(
-    #     '-g', '--group-size', dest='group_size',
-    #     help='Group size', type=int
-    # )
-    # parser.add_argument(
-    #     '-d', '--divisibility', dest='max_tests_per_individual', metavar='Divisibility',
-    #     help='Divisibility or maximum number of times a person’s sample can be included in a test. ', type=int
-    # )
-    # parser.add_argument(
-    #     '-s', dest='s', metavar='NUM_OF_INFECTED',
-    #     help='number of infecteds', type=int
-    # )
+    parser.add_argument(
+        '--available-solvers', dest='available_solver', action='store_true',
+        help='show available solvers for decoding and exit'
+    )
 
     args = parser.parse_args()
-    #print("------------------->",args.N)
+    if args.available_solver:
+        print("Available solvers for decoding are: {} ".format(pl.list_solvers(onlyAvailable=True)))
+        parser.exit()
+    if args.config is None:
+        parser.error("the following arguments are required: --config")
     # Read config file
     design_param, decoder_param = utils.config_reader(args.config)
     # output files path
@@ -274,10 +281,8 @@ def main(sysargs=sys.argv[1:]):
     # Saving files
     pd.DataFrame(design_param).to_csv(os.path.join(result_path, 'opts.csv'))
     if all(v is not None for v in results):
-        column_names = ['N', 'm', 's', 'group_size', 'seed', 'max_tests_per_individual', 'tn', 'fp', 'fn', 'tp',
-                        decoder_param[0]['eval_metric'], 'Status', 'fitting_time', 'time']
-        print(pd.DataFrame(results).reindex(columns=column_names))
-        pd.DataFrame(results).reindex(columns=column_names).to_csv(os.path.join(result_path, 'ConfusionMatrix.csv'))
+        print(pd.DataFrame(results))
+        pd.DataFrame(results).to_csv(os.path.join(result_path, 'ConfusionMatrix.csv'))
 
     end_time = time.time()
     print(end_time - start_time)

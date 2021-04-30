@@ -9,18 +9,36 @@ import group_testing.utils as utils
 
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
+    """
+    A class to represent a decoder
+    """
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
-                 sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False, lp_rounding_threshold=0,
+                 lp_relaxation=False, lp_rounding_threshold=0,
                  is_it_noiseless=True, solver_name=None, solver_options=None):
-        # TODO: Check their values
-        # TODO: Change lambda_w to sample weight
+        """
+        Constructs all the necessary attributes for the decoder object.
+
+        Parameters:
+
+            lambda_w (vector): A vector to provide prior weight. Default to vector of ones.
+            lambda_p (int): Regularization coefficient for positive labels. Default to 1.
+            lambda_n (int): Regularization coefficient for negative labels. Default to 1.
+            lambda_e (int): Regularization coefficient for both negative and positive labels. Default to None. When is
+            not None both lambda_p and lambda_n would be equal to each other and equal to value of lambda_e
+            (i.e. lambda_p = lambda_n = lambda_e)
+            defective_num_lower_bound (int): lower bound for number of infected people. Default to None.
+            lp_relaxation (bool): A flag to use the lp relaxed version. Default to False.
+            lp_rounding_threshold (float): Rounding to 0 and 1 for threshold for lp solutions. Default to 0.
+            Range from 0 to 1.
+            is_it_noiseless (bool): A flag to specify whether the problem is noisy or noiseless. Default to True.
+            solver_name (str): Solver's name provided by Pulp. Default to None.
+            solver_options (dic): Solver's options provided by Pulp. Default to None.
+
+        """
+
         self.lambda_e = lambda_e
         self.lambda_p = lambda_p
         self.lambda_n = lambda_n
-
-        # -----------------------------------------
-        # lambda_w is added as a coefficient for vector w. lambda_w could be used as a vector of prior probabilities.
-        # lambda_w default value is 1.
         try:
             assert isinstance(lambda_w, (int, float, list))
             self.lambda_w = lambda_w
@@ -28,8 +46,6 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             print("lambda_w should be either int, float or list of numbers")
         # -----------------------------------------
         self.defective_num_lower_bound = defective_num_lower_bound
-        self.sensitivity_threshold = sensitivity_threshold
-        self.specificity_threshold = specificity_threshold
         self.lp_relaxation = lp_relaxation
         self.lp_rounding_threshold = lp_rounding_threshold
         self.is_it_noiseless = is_it_noiseless
@@ -44,6 +60,18 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             self.en_upBound = None
 
     def fit(self, A, label):
+        """
+        Function to a decode base of design matrix and test results
+
+        Parameters:
+
+            A (binary numpy 2d-array): The group testing matrix.
+            label (binary numpy array): The vector of results of the group tests.
+
+        Returns:
+
+            self (GroupTestingDecoder): A decoder object including decoding solution
+        """
         if self.lambda_e is not None:
             # Use lambda_e if both lambda_p and lambda_n have same value
             self.lambda_p = self.lambda_e
@@ -131,6 +159,17 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         return self
 
     def get_params_w(self, deep=True):
+        """
+        Function to provide a dictionary of individuals with their status obtained by decoder.
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+
+        Returns:
+
+            w_solutions_dict (dict): A dictionary of individuals with their status.
+        """
         variable_type = 'w'
         try:
             assert self.prob_ is not None
@@ -148,6 +187,17 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         return w_solution_dict
 
     def solution(self):
+        """
+        Function to provide a vector of decoder solution.
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+
+        Returns:
+
+            w_solutions (vector): A vector of decoder solution.
+        """
         try:
             assert self.prob_ is not None
             # w_solution = [v.name[2:] for v in self.prob_.variables() if v.name[0] == 'w' and v.varValue > 0]
@@ -163,13 +213,34 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             raise RuntimeError("You must fit the data first!")
         return w_solution
 
-    def predict(self, X):
-        return np.minimum(np.matmul(X, self.solution()), 1)
+    def predict(self, A):
+        """
+        Function to predict test results based on solution.
 
-    # def score(self):
-    #     pass
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+            A (binary numpy 2d-array): The group testing matrix.
+
+        Returns:
+
+             A vector of predicted test results based on the decoder solution.
+        """
+        return np.minimum(np.matmul(A, self.solution()), 1)
 
     def decodingScore(self, w_true):
+        """
+        Function to evaluate decoder's solution based on balanced_accuracy
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+            w_true (vector): True individual status value.
+
+        Returns:
+
+             Balanced accuracy of the decoder solution
+        """
         return balanced_accuracy_score(w_true, self.solution())
 
     def write(self):
@@ -177,6 +248,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
 
 
 if __name__ == '__main__':
+    """
+    Main method for testing decoder
+    """
     # options for plotting, verbose output, saving, seed
     opts = {}
     opts['m'] = 150

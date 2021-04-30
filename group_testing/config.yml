@@ -11,9 +11,9 @@ design:
       'm': 500
       'verbose': False
       'graph_gen_method': 'no_multiple'
-      'group_size': 8
-#        mode: 'range'
-#        values: [8,18,2]
+      'group_size':
+        mode: 'list'
+        values: ['auto',8]
       'max_tests_per_individual':
         'mode': 'list'
         'values': [16]
@@ -27,12 +27,10 @@ design:
   'test_results':
     #'input': 'test_results.csv'
     'params':
-      seed: 20
-      'verbose': False
       'test_noise_methods': []
       'permutation_noise_prob':
         'mode': 'list'
-        'values': [0.01]
+        'values': [0.01, 0.02]
       'theta_l':
         'mode': 'list'
         'values': [0.00]

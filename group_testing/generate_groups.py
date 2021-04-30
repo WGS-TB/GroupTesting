@@ -208,34 +208,3 @@ def gen_measurement_matrix(seed=0, N=1000, m=100, group_size=4, max_tests_per_in
 
     # return the adjacency matrix of the graph
     return A
-
-
-if __name__ == '__main__':
-    """
-    Main method for testing
-    """
-
-    # print igraph version
-    print("Loaded igraph version {}".format(igraph.__version__))
-
-    # options for plotting, verbose output, saving, seed
-    opts = {}
-    opts['m'] = 100
-    opts['N'] = 500
-    opts['group_size'] = 6
-    opts['max_tests_per_individual'] = 15
-    opts['graph_gen_method'] = 'no_multiple'  # options are "no_multiple" or "simple"
-    opts['verbose'] = True  # False
-    opts['plotting'] = False  # False
-    opts['saving'] = True
-    opts['run_ID'] = 'GT_matrix_generation_component'
-    #opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['seed'] = 0
-
-    # generate the measurement matrix with igraph
-    A = gen_measurement_matrix(**opts)
-
-    # print shape of matrix
-    if opts['verbose']:
-        print("Generated adjacency matrix of size:")
-        print(A.shape)

@@ -49,26 +49,3 @@ def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
         sys.exit()
 
     return u
-
-if __name__ == '__main__':
-    """
-    Main method for testing
-    """
-
-    # options for plotting, verbose output, saving, seed
-    opts = {}
-    opts['N'] = 500
-    opts['s'] = 20
-    opts['verbose'] = True #False
-    # opts['plotting'] = True #False
-    # opts['saving'] = True
-    # opts['run_ID'] = 'GT_status_vector_generation_component'
-    # opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['seed'] = 0
-
-    u = gen_status_vector(**opts)
-
-    # print shape of matrix
-    if opts['verbose']:
-        print("Generated status vector of size:")
-        print(u.shape)

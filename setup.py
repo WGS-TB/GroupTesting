@@ -9,7 +9,7 @@ setup(
     name="GroupTesting",
     version=__version__,
     author="Hooman Zabeti, Nick Dexter",
-    author_email="hzabeti@sfu.ca, nicholas_dexter@sfu.ca"
+    author_email="hzabeti@sfu.ca, nicholas_dexter@sfu.ca",
     description="Group testing for SARS-CoV-2 in large populations.",
     url="https://github.com/WGS-TB/GroupTesting",
     license="GPL-3",

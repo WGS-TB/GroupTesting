@@ -1,25 +1,44 @@
 import pulp as pl
-from pulp import *
 import os
 import numpy as np
-from generate_test_results import gen_test_vector
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import balanced_accuracy_score
-from utils import *
+
+from group_testing.generate_test_results import gen_test_vector
+import group_testing.utils as utils
+
 
 class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
+    """
+    A class to represent a decoder
+    """
     def __init__(self, lambda_w=1, lambda_p=1, lambda_n=1, lambda_e=None, defective_num_lower_bound=None,
-                 sensitivity_threshold=None, specificity_threshold=None, lp_relaxation=False, lp_rounding_threshold=0,
+                 lp_relaxation=False, lp_rounding_threshold=0,
                  is_it_noiseless=True, solver_name=None, solver_options=None):
-        # TODO: Check their values
-        # TODO: Change lambda_w to sample weight
+        """
+        Constructs all the necessary attributes for the decoder object.
+
+        Parameters:
+
+            lambda_w (vector): A vector to provide prior weight. Default to vector of ones.
+            lambda_p (int): Regularization coefficient for positive labels. Default to 1.
+            lambda_n (int): Regularization coefficient for negative labels. Default to 1.
+            lambda_e (int): Regularization coefficient for both negative and positive labels. Default to None. When is
+            not None both lambda_p and lambda_n would be equal to each other and equal to value of lambda_e
+            (i.e. lambda_p = lambda_n = lambda_e)
+            defective_num_lower_bound (int): lower bound for number of infected people. Default to None.
+            lp_relaxation (bool): A flag to use the lp relaxed version. Default to False.
+            lp_rounding_threshold (float): Rounding to 0 and 1 for threshold for lp solutions. Default to 0.
+            Range from 0 to 1.
+            is_it_noiseless (bool): A flag to specify whether the problem is noisy or noiseless. Default to True.
+            solver_name (str): Solver's name provided by Pulp. Default to None.
+            solver_options (dic): Solver's options provided by Pulp. Default to None.
+
+        """
+
         self.lambda_e = lambda_e
         self.lambda_p = lambda_p
         self.lambda_n = lambda_n
-
-        # -----------------------------------------
-        # lambda_w is added as a coefficient for vector w. lambda_w could be used as a vector of prior probabilities.
-        # lambda_w default value is 1.
         try:
             assert isinstance(lambda_w, (int, float, list))
             self.lambda_w = lambda_w
@@ -27,19 +46,32 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             print("lambda_w should be either int, float or list of numbers")
         # -----------------------------------------
         self.defective_num_lower_bound = defective_num_lower_bound
-        self.sensitivity_threshold = sensitivity_threshold
-        self.specificity_threshold = specificity_threshold
         self.lp_relaxation = lp_relaxation
         self.lp_rounding_threshold = lp_rounding_threshold
         self.is_it_noiseless = is_it_noiseless
         self.solver_name = solver_name
         self.solver_options = solver_options
         self.prob_ = None
-        self.ep_cat = 'Binary'
-        self.en_cat = 'Binary'
-        self.en_upBound = 1
+        # self.ep_cat = 'Binary'
+        # self.en_cat = 'Binary'
+        if self.lp_relaxation:
+            self.en_upBound = 1
+        else:
+            self.en_upBound = None
 
     def fit(self, A, label):
+        """
+        Function to a decode base of design matrix and test results
+
+        Parameters:
+
+            A (binary numpy 2d-array): The group testing matrix.
+            label (binary numpy array): The vector of results of the group tests.
+
+        Returns:
+
+            self (GroupTestingDecoder): A decoder object including decoding solution
+        """
         if self.lambda_e is not None:
             # Use lambda_e if both lambda_p and lambda_n have same value
             self.lambda_p = self.lambda_e
@@ -61,29 +93,30 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
                   "testing matrix)")
         # -------------------------------------
         # Initializing the ILP problem
-        p = LpProblem('GroupTesting', LpMinimize)
+        p = pl.LpProblem('GroupTesting', pl.LpMinimize)
         # p.verbose(param['verbose'])
         # Variables kind
         if self.lp_relaxation:
             varCategory = 'Continuous'
+            #self.solver_options['mip']= True
         else:
             varCategory = 'Binary'
         # Variable w
-        w = LpVariable.dicts('w', range(n), lowBound=0, upBound=1, cat=varCategory)
+        w = pl.LpVariable.dicts('w', range(n), lowBound=0, upBound=1, cat=varCategory)
         # --------------------------------------
         # Noiseless setting
         if self.is_it_noiseless:
             # Defining the objective function
-            p += lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
+            p += pl.lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)])
             # Constraints
             for i in positive_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)]) >= 1
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)]) >= 1
             for i in negative_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)]) == 0
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)]) == 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
-                p += lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
+                p += pl.lpSum([w[k] for k in range(n)]) >= self.defective_num_lower_bound
 
         # --------------------------------------
         # Noisy setting
@@ -92,37 +125,51 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             en = []
             # Variable ep
             if len(positive_label) != 0:
-                ep = LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat=self.ep_cat)
+                ep = pl.LpVariable.dicts(name='ep', indexs=list(positive_label), lowBound=0, upBound=1, cat=varCategory)
             # Variable en
             if len(negative_label) != 0:
-                en = LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
-                                      cat=self.en_cat)
+                en = pl.LpVariable.dicts(name='en', indexs=list(negative_label), lowBound=0, upBound=self.en_upBound,
+                                      cat=varCategory)
             # Defining the objective function
-            p += lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
+            p += pl.lpSum([self.lambda_w * w[i] if isinstance(self.lambda_w, (int, float)) else self.lambda_w[i] * w[i]
                         for i in range(n)]) + \
-                 lpSum([self.lambda_p * ep[j] for j in positive_label]) + \
-                 lpSum([self.lambda_n * en[k] for k in negative_label])
+                 pl.lpSum([self.lambda_p * ep[j] for j in positive_label]) + \
+                 pl.lpSum([self.lambda_n * en[k] for k in negative_label])
             # Constraints
             for i in positive_label:
-                p += lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
+                p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + ep[i]) >= 1
             for i in negative_label:
-                if self.en_cat == 'Continuous':
-                    p += lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
+                if varCategory == 'Continuous':
+                    p += pl.lpSum([A[i][j] * w[j] for j in range(n)] + -1 * en[i]) == 0
                 else:
-                    p += lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
+                    p += pl.lpSum([-1 * A[i][j] * w[j] for j in range(n)] + alpha[i] * en[i]) >= 0
             # Prevalence lower-bound
             if self.defective_num_lower_bound is not None:
-                p += lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
-        solver = pl.get_solver(self.solver_name, **self.solver_options)
+                p += pl.lpSum([w[i] for i in range(n)]) >= self.defective_num_lower_bound
+        if self.solver_options is not None:
+            solver = pl.get_solver(self.solver_name, **self.solver_options)
+        else:
+            solver = pl.get_solver(self.solver_name)
         p.solve(solver)
         if not self.lp_relaxation:
             p.roundSolution()
         # ----------------
         self.prob_ = p
-        print("Status:", LpStatus[p.status])
+        #print("Status:", pl.LpStatus[p.status])
         return self
 
     def get_params_w(self, deep=True):
+        """
+        Function to provide a dictionary of individuals with their status obtained by decoder.
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+
+        Returns:
+
+            w_solutions_dict (dict): A dictionary of individuals with their status.
+        """
         variable_type = 'w'
         try:
             assert self.prob_ is not None
@@ -133,13 +180,24 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # TODO: we use utils.py and the following lines of codes
             w_solution_dict = dict([(v.name, v.varValue)
                                     for v in self.prob_.variables() if variable_type in v.name])
-            index_map = {v: i for i, v in enumerate(sorted(w_solution_dict.keys(), key=natural_keys))}
+            index_map = {v: i for i, v in enumerate(sorted(w_solution_dict.keys(), key=utils.natural_keys))}
             w_solution_dict = {k: v for k, v in sorted(w_solution_dict.items(), key=lambda pair: index_map[pair[0]])}
         except AttributeError:
             raise RuntimeError("You must fit the data first!")
         return w_solution_dict
 
     def solution(self):
+        """
+        Function to provide a vector of decoder solution.
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+
+        Returns:
+
+            w_solutions (vector): A vector of decoder solution.
+        """
         try:
             assert self.prob_ is not None
             # w_solution = [v.name[2:] for v in self.prob_.variables() if v.name[0] == 'w' and v.varValue > 0]
@@ -147,7 +205,7 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             # TODO: to use the solution. We need to use alphabetical sort based on variables names (v.names). To do so
             # TODO: we use utils.py and the following lines of codes
             w_solution = self.get_params_w()
-            index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=natural_keys))}
+            index_map = {v: i for i, v in enumerate(sorted(w_solution.keys(), key=utils.natural_keys))}
             w_solution = [v for k, v in sorted(w_solution.items(), key=lambda pair: index_map[pair[0]])]
             if self.lp_relaxation:
                 w_solution = [1 if i > self.lp_rounding_threshold else 0 for i in w_solution]
@@ -155,60 +213,35 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
             raise RuntimeError("You must fit the data first!")
         return w_solution
 
-    def predict(self, X):
-        return np.minimum(np.matmul(X, self.solution()), 1)
+    def predict(self, A):
+        """
+        Function to predict test results based on solution.
 
-    # def score(self):
-    #     pass
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+            A (binary numpy 2d-array): The group testing matrix.
+
+        Returns:
+
+             A vector of predicted test results based on the decoder solution.
+        """
+        return np.minimum(np.matmul(A, self.solution()), 1)
 
     def decodingScore(self, w_true):
+        """
+        Function to evaluate decoder's solution based on balanced_accuracy
+
+        Parameters:
+
+            self (GroupTestingDecoder): Decoder object.
+            w_true (vector): True individual status value.
+
+        Returns:
+
+             Balanced accuracy of the decoder solution
+        """
         return balanced_accuracy_score(w_true, self.solution())
 
     def write(self):
         pass
-
-
-if __name__ == '__main__':
-    # options for plotting, verbose output, saving, seed
-    opts = {}
-    opts['m'] = 150
-    opts['N'] = 300
-    opts['verbose'] = True  # False
-    opts['plotting'] = True  # False
-    opts['saving'] = True
-    opts['run_ID'] = 'GT_test_result_vector_generation_component'
-    opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['test_noise_methods'] = []
-    opts['seed'] = 0
-
-    A = np.random.randint(2, size=(opts['m'], opts['N']))
-    u = np.random.randint(2, size=opts['N'])
-    b = gen_test_vector(A, u, opts)
-    # print(A)
-    # print(b)
-    # print(u)
-
-    # Test
-    # A = np.array([[1,0,0],[1,0,1],[0,1,0]])
-    # b = np.array([1,0,1])
-    current_directory = os.getcwd()
-    file_path = os.path.join(current_directory, r'problem.mps')
-
-    param = {}
-    # param['file_path'] = file_path
-    param['lambda_w'] = 1
-    param['lambda_p'] = 100
-    param['lambda_n'] = 100
-    # param['verbose'] = False
-    param['defective_num_lower_bound'] = None
-    param['sensitivity_threshold'] = None
-    param['specificity_threshold'] = None
-    param['is_it_noiseless'] = True
-    param['lp_relaxation'] = True
-    param['solver_name'] = 'COIN_CMD'
-    param['solver_options'] = {'timeLimit': 60, 'logPath': 'log.txt'}
-
-    c = GroupTestingDecoder(**param)
-    c.fit(A, b)
-    print(c.decodingScore(b))
-

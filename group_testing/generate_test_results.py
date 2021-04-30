@@ -10,26 +10,41 @@ import sys, math
 from os import path
 import random
 import numpy as np
-from generate_groups import gen_measurement_matrix
-from generate_individual_status import gen_status_vector
-from utils import *
+
+from group_testing.generate_groups import gen_measurement_matrix
+from group_testing.generate_individual_status import gen_status_vector
+import group_testing.utils as utils
 
 # np.set_printoptions(threshold=np.inf)
 np.set_printoptions(edgeitems=60, linewidth=100000,
                     formatter=dict(float=lambda x: "%.3g" % x))
 import scipy.io as sio
 
-"""
-Function to generate the results of the tests from the measurement matrix A 
-and the status vector u
-"""
-
-
 def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], binary_symmetric_noise_prob=0.26,
                     theta_l=0, theta_u=0.0625, permutation_noise_prob=0.01):
+    """
+    Function to generate the results of the tests from the measurement matrix A 
+    and the status vector u in both the noiseless and noisy setting
+
+    Parameters:
+        A (binary numpy array): The group testing matrix
+        u (binary numpy array): The individual status vector
+        seed (int): Seed for random number generation
+        m (int): Number of group tests
+        verbose (bool): Flag for turning on debugging print statements
+        test_noise_methods (str list): The list of noise models to apply
+        binary_symmetric_noise_prob (float): The noise level for the binary symmetric noise model
+        theta_l (float): The lower bound for the threshold noise model
+        theta_u (float): The upper bound for the threshold noise model
+        permutation_noise_prob (float): The noise level for the permutation noise model
+
+    Returns:
+        b (binary numpy array): The vector of results of the group tests
+    """
+
     # set the seed used for test result noise
     random.seed(seed)
-    np.random.seed(seed)
+    np_random = np.random.RandomState(seed)
 
     # generate the tests directly from A and u
     b = np.matmul(A, u)
@@ -61,7 +76,7 @@ def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], b
 
             num_flip = math.ceil(m * rho)
 
-            vec = np.random.choice(indices, size=num_flip, replace=False, p=weight_vec)
+            vec = np_random.choice(indices, size=num_flip, replace=False, p=weight_vec)
 
             # copy b into a new vector for adding noise
             b_noisy = np.array(b)
@@ -116,7 +131,7 @@ def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], b
                         # b_noisy[i] = np.random.randint(2)
 
                         # instead use probability of false negatives = 1/10 
-                        b_noisy[i] = np.random.choice(np.arange(2), p=[0.1, 0.9])
+                        b_noisy[i] = np_random.choice(np.arange(2), p=[0.1, 0.9])
 
             if verbose:
                 print('after threshold noise - left: b, right: b_noisy')
@@ -146,7 +161,7 @@ def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], b
                 print('number of permuted items exceeds m, incorrect range for rho?')
                 sys.exit()
             else:
-                vec = np.random.choice(indices, size=2 * num_permute, replace=False, p=weight_vec)
+                vec = np_random.choice(indices, size=2 * num_permute, replace=False, p=weight_vec)
 
             # copy b into a new vector for adding noise
             b_noisy = np.array(b)
@@ -188,6 +203,9 @@ def gen_test_vector(A, u, seed=0, m=100, verbose=False, test_noise_methods=[], b
 
 
 if __name__ == '__main__':
+    """
+    Main method for testing
+    """
 
     # options for plotting, verbose output, saving, seed
     opts = {}
@@ -222,9 +240,9 @@ if __name__ == '__main__':
     opts['verbose'] = False
     opts['plotting'] = False
     opts['saving'] = False
-    passing_param, _ = param_distributor(opts, gen_measurement_matrix)
+    passing_param, _ = utils.param_distributor(opts, gen_measurement_matrix)
     A = gen_measurement_matrix(**passing_param)
-    passing_param, _ = param_distributor(opts, gen_status_vector)
+    passing_param, _ = utils.param_distributor(opts, gen_status_vector)
     u = gen_status_vector(**passing_param)
 
     opts['verbose'] = True

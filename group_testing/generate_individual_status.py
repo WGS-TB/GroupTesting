@@ -15,17 +15,27 @@ np.set_printoptions(edgeitems=60, linewidth=100000,
     formatter=dict(float=lambda x: "%.3g" % x))
 import scipy.io as sio
 
-"""
-Function to generate the infected status of individuals (a vector)
-"""
 def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
+    """
+    Function to generate the infected status of individuals (a vector)
+
+    Parameters:
+        seed (int): Seed for random number generation
+        N (int): Population size
+        s (int): Number of infected individuals
+        verbose (bool): Flag for turning on debugging print statements
+
+    Returns:
+        u (binary numpy array): The status vector
+    """
 
     # set the seed used for status generation
-    random.seed(seed)
+    local_random = random.Random()
+    local_random.seed(seed)
     np.random.seed(seed)
 
     # generate a random vector having sparsity level s
-    indices = random.sample(range(N), s)
+    indices = local_random.sample(range(N), s)
     u = np.zeros((N, 1))
     for i in indices:
         u[i] = 1
@@ -39,23 +49,3 @@ def gen_status_vector(seed=0, N=1000, s=10, verbose=False):
         sys.exit()
 
     return u
-
-if __name__ == '__main__':
-
-    # options for plotting, verbose output, saving, seed
-    opts = {}
-    opts['N'] = 500
-    opts['s'] = 20
-    opts['verbose'] = True #False
-    # opts['plotting'] = True #False
-    # opts['saving'] = True
-    # opts['run_ID'] = 'GT_status_vector_generation_component'
-    # opts['data_filename'] = opts['run_ID'] + '_generate_groups_output.mat'
-    opts['seed'] = 0
-
-    u = gen_status_vector(**opts)
-
-    # print shape of matrix
-    if opts['verbose']:
-        print("Generated status vector of size:")
-        print(u.shape)

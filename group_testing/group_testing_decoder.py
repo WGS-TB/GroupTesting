@@ -55,9 +55,9 @@ class GroupTestingDecoder(BaseEstimator, ClassifierMixin):
         # self.ep_cat = 'Binary'
         # self.en_cat = 'Binary'
         if self.lp_relaxation:
-            self.en_upBound = 1
-        else:
             self.en_upBound = None
+        else:
+            self.en_upBound = 1
 
     def fit(self, A, label):
         """
